@@ -1,9 +1,9 @@
-/**
- * Utility helpers.
- *
- * TODO: Port from o-network-cli as needed:
- * - language-map.ts: File extension to language detection
- * - metadata.ts: Git repo metadata builder (QueryMetadata)
- * - pipeline-resolver.ts: Match files to ingestion pipelines
- * - transforms.ts: Content transforms (strip_comments, truncate, etc.)
- */
+export {
+  DEFAULT_LANGUAGE_MAP,
+  buildLanguageMap,
+  detectLanguage,
+  isIndexableCodePath,
+} from './language-map.js';
+export { buildQueryMetadata } from './metadata.js';
+export { matchPipeline } from './pipeline-resolver.js';
+export { applyTransforms } from './transforms.js';

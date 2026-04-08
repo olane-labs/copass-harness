@@ -1,12 +1,19 @@
-import type { ExtractionResource } from './resources/extraction.js';
-import type { EntitiesResource } from './resources/entities.js';
-import type { CosyncResource } from './resources/cosync.js';
-import type { PlansResource } from './resources/plans.js';
-import type { MatrixResource } from './resources/matrix.js';
-import type { ProjectsResource } from './resources/projects.js';
-import type { UsersResource } from './resources/users.js';
-import type { ApiKeysResource } from './resources/api-keys.js';
-import type { UsageResource } from './resources/usage.js';
+import { ApiKeyAuthProvider } from './auth/api-key.js';
+import { BearerAuthProvider } from './auth/bearer.js';
+import { SupabaseAuthProvider } from './auth/supabase.js';
+import type { SupabaseAuthOptions } from './auth/supabase.js';
+import type { AuthProvider } from './auth/types.js';
+import { HttpClient } from './http/http-client.js';
+import { ExtractionResource } from './resources/extraction.js';
+import { EntitiesResource } from './resources/entities.js';
+import { CosyncResource } from './resources/cosync.js';
+import { PlansResource } from './resources/plans.js';
+import { MatrixResource } from './resources/matrix.js';
+import { ProjectsResource } from './resources/projects.js';
+import { UsersResource } from './resources/users.js';
+import { ApiKeysResource } from './resources/api-keys.js';
+import { UsageResource } from './resources/usage.js';
+import type { RequestMiddleware, ResponseMiddleware } from './http/http-client.js';
 import type { RetryConfig } from './types/common.js';
 
 /**
@@ -14,12 +21,14 @@ import type { RetryConfig } from './types/common.js';
  *
  * - `api-key`: Long-lived API key with `olk_` prefix
  * - `bearer`: Raw JWT token (caller manages refresh)
- * - `supabase`: Managed Supabase OTP auth (planned)
+ * - `supabase`: Managed Supabase OTP auth with auto-refresh
+ * - `provider`: Custom AuthProvider implementation
  */
 export type AuthConfig =
   | { type: 'api-key'; key: string }
   | { type: 'bearer'; token: string }
-  | { type: 'supabase'; email: string };
+  | { type: 'supabase'; options: SupabaseAuthOptions }
+  | { type: 'provider'; provider: AuthProvider };
 
 export interface CopassClientOptions {
   /** Base URL for the Copass API. Default: 'https://ai.copass.id' */
@@ -30,8 +39,10 @@ export interface CopassClientOptions {
   encryptionKey?: string;
   /** Retry configuration for transient failures. */
   retry?: RetryConfig;
-  /** Default project ID to include in requests. */
-  projectId?: string;
+  /** Middleware hooks called before each request. */
+  onRequest?: RequestMiddleware[];
+  /** Middleware hooks called after each successful response. */
+  onResponse?: ResponseMiddleware[];
 }
 
 const DEFAULT_API_URL = 'https://ai.copass.id';
@@ -49,33 +60,54 @@ const DEFAULT_API_URL = 'https://ai.copass.id';
  * });
  *
  * const result = await client.matrix.query({ query: 'How does auth work?' });
+ * const score = await client.cosync.score({ canonical_ids: ['...'] });
  * ```
  */
 export class CopassClient {
-  readonly extraction!: ExtractionResource;
-  readonly entities!: EntitiesResource;
-  readonly cosync!: CosyncResource;
-  readonly plans!: PlansResource;
-  readonly matrix!: MatrixResource;
-  readonly projects!: ProjectsResource;
-  readonly users!: UsersResource;
-  readonly apiKeys!: ApiKeysResource;
-  readonly usage!: UsageResource;
-
-  private readonly apiUrl: string;
-  private readonly auth: AuthConfig;
-  private readonly encryptionKey?: string;
-  private readonly projectId?: string;
+  readonly extraction: ExtractionResource;
+  readonly entities: EntitiesResource;
+  readonly cosync: CosyncResource;
+  readonly plans: PlansResource;
+  readonly matrix: MatrixResource;
+  readonly projects: ProjectsResource;
+  readonly users: UsersResource;
+  readonly apiKeys: ApiKeysResource;
+  readonly usage: UsageResource;
 
   constructor(options: CopassClientOptions) {
-    this.apiUrl = (options.apiUrl ?? DEFAULT_API_URL).replace(/\/+$/, '');
-    this.auth = options.auth;
-    this.encryptionKey = options.encryptionKey;
-    this.projectId = options.projectId;
+    const authProvider = createAuthProvider(options.auth, options.encryptionKey);
+    const http = new HttpClient({
+      apiUrl: options.apiUrl ?? DEFAULT_API_URL,
+      authProvider,
+      retry: options.retry,
+      onRequest: options.onRequest,
+      onResponse: options.onResponse,
+    });
 
-    // TODO: Initialize HTTP client and resource instances
-    // this.extraction = new ExtractionResource(httpClient);
-    // this.entities = new EntitiesResource(httpClient);
-    // etc.
+    this.extraction = new ExtractionResource(http);
+    this.entities = new EntitiesResource(http);
+    this.cosync = new CosyncResource(http);
+    this.plans = new PlansResource(http);
+    this.matrix = new MatrixResource(http);
+    this.projects = new ProjectsResource(http);
+    this.users = new UsersResource(http);
+    this.apiKeys = new ApiKeysResource(http);
+    this.usage = new UsageResource(http);
+  }
+}
+
+function createAuthProvider(auth: AuthConfig, encryptionKey?: string): AuthProvider {
+  switch (auth.type) {
+    case 'api-key':
+      return new ApiKeyAuthProvider(auth.key);
+    case 'bearer':
+      return new BearerAuthProvider(auth.token, encryptionKey);
+    case 'supabase':
+      return new SupabaseAuthProvider({
+        ...auth.options,
+        encryptionKey: auth.options.encryptionKey ?? encryptionKey,
+      });
+    case 'provider':
+      return auth.provider;
   }
 }

@@ -1,21 +1,26 @@
-import type {
-  CanonicalEntity,
-  EntityPerspective,
-  ExtractionSource,
-} from '../types/entities.js';
+import { BaseResource } from './base.js';
+import type { CanonicalEntity, EntityPerspective, ExtractionSource } from '../types/entities.js';
 
 /**
  * Entities resource — manage canonical entities.
- *
- * Endpoints: GET /users/me/canonical-entities, /canonical-entities/{id}/perspective
  */
-export interface EntitiesResource {
-  /** List all canonical entities for the authenticated user. */
-  list(): Promise<CanonicalEntity[]>;
+export class EntitiesResource extends BaseResource {
+  async list(): Promise<CanonicalEntity[]> {
+    const response = await this.get<{ canonical_entities: CanonicalEntity[] }>(
+      '/api/v1/users/me/canonical-entities',
+    );
+    return response.canonical_entities;
+  }
 
-  /** Get full perspective of a canonical entity. */
-  getPerspective(canonicalId: string): Promise<EntityPerspective>;
+  async getPerspective(canonicalId: string): Promise<EntityPerspective> {
+    return this.get<EntityPerspective>(
+      `/api/v1/users/me/canonical-entities/${canonicalId}/perspective`,
+    );
+  }
 
-  /** List extraction sources for a canonical entity. */
-  getExtractionSources(canonicalId: string): Promise<ExtractionSource[]>;
+  async getExtractionSources(canonicalId: string): Promise<ExtractionSource[]> {
+    return this.get<ExtractionSource[]>(
+      `/api/v1/users/me/canonical-entities/${canonicalId}/extraction-sources`,
+    );
+  }
 }

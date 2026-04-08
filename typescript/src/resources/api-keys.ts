@@ -1,3 +1,4 @@
+import { BaseResource } from './base.js';
 import type {
   CreateApiKeyRequest,
   CreateApiKeyResponse,
@@ -6,16 +7,17 @@ import type {
 
 /**
  * API Keys resource — manage API keys.
- *
- * Endpoints: POST /api-keys, GET /api-keys, DELETE /api-keys/{id}
  */
-export interface ApiKeysResource {
-  /** Create a new API key. The raw key is only returned once. */
-  create(request: CreateApiKeyRequest): Promise<CreateApiKeyResponse>;
+export class ApiKeysResource extends BaseResource {
+  async create(request: CreateApiKeyRequest): Promise<CreateApiKeyResponse> {
+    return this.post<CreateApiKeyResponse>('/api/v1/api-keys', request);
+  }
 
-  /** List API keys (masked). */
-  list(): Promise<ApiKeyInfo[]>;
+  async list(): Promise<ApiKeyInfo[]> {
+    return this.get<ApiKeyInfo[]>('/api/v1/api-keys');
+  }
 
-  /** Revoke an API key. */
-  revoke(keyId: string): Promise<void>;
+  async revoke(keyId: string): Promise<void> {
+    await this.delete(`/api/v1/api-keys/${keyId}`);
+  }
 }

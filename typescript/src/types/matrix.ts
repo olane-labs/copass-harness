@@ -1,11 +1,14 @@
-import type { DetailLevel, SearchPreset } from './common.js';
+import type { SearchPreset } from './common.js';
+
+/** Detail level for matrix query responses. */
+export type MatrixDetailLevel = 'concise' | 'detailed';
 
 /** Request for a matrix (natural language) query. */
 export interface MatrixQueryRequest {
   query: string;
   project_id?: string;
   reference_date?: string;
-  detail_level?: DetailLevel;
+  detail_level?: MatrixDetailLevel;
   max_tokens?: number;
   /** Search matrix preset. Sent as X-Search-Matrix header. */
   preset?: SearchPreset;
@@ -17,7 +20,14 @@ export interface MatrixQueryRequest {
 
 /** Response from a matrix query. */
 export interface MatrixQueryResponse {
+  /** The original query that was submitted. */
+  query: string;
+  /** LLM-generated answer derived from the knowledge graph context. */
   answer: string;
-  context: string;
+  /** The search matrix preset that was used. */
+  preset: string;
+  /** Total wall time in milliseconds (scoping + search + interpretation). */
   execution_time_ms: number;
+  /** System warnings (e.g., 'no_context', 'interpretation_failed'). */
+  warnings?: string[];
 }

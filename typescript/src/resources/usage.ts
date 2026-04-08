@@ -1,14 +1,15 @@
+import { BaseResource } from './base.js';
 import type { UsageResponse, UsageBalance } from '../types/usage.js';
 
 /**
  * Usage resource — token consumption and credit tracking.
- *
- * Endpoints: GET /usage, GET /usage/balance
  */
-export interface UsageResource {
-  /** Get token consumption and cost breakdown. */
-  get(): Promise<UsageResponse>;
+export class UsageResource extends BaseResource {
+  async getSummary(): Promise<UsageResponse> {
+    return this.get<UsageResponse>('/api/v1/usage');
+  }
 
-  /** Get token credit balance. */
-  getBalance(): Promise<UsageBalance>;
+  async getBalance(): Promise<UsageBalance> {
+    return this.get<UsageBalance>('/api/v1/usage/balance');
+  }
 }

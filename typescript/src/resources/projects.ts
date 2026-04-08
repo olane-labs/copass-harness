@@ -1,3 +1,4 @@
+import { BaseResource } from './base.js';
 import type {
   RegisterProjectRequest,
   ProjectRecord,
@@ -6,16 +7,19 @@ import type {
 
 /**
  * Projects resource — project registration and lifecycle.
- *
- * Endpoints: POST /projects/register, GET /projects/status, PATCH /projects/{id}/complete
  */
-export interface ProjectsResource {
-  /** Register or upsert a project. */
-  register(request: RegisterProjectRequest): Promise<ProjectRecord>;
+export class ProjectsResource extends BaseResource {
+  async register(request: RegisterProjectRequest): Promise<ProjectRecord> {
+    return this.post<ProjectRecord>('/api/v1/projects/register', request);
+  }
 
-  /** Get project indexing status. */
-  getStatus(projectPath: string): Promise<ProjectStatusResponse>;
+  async getStatus(projectPath: string): Promise<ProjectStatusResponse> {
+    return this.get<ProjectStatusResponse>('/api/v1/projects/status', {
+      query: { project_path: projectPath },
+    });
+  }
 
-  /** Mark project indexing as complete. */
-  complete(projectId: string): Promise<void>;
+  async complete(projectId: string): Promise<void> {
+    await this.patch(`/api/v1/projects/${projectId}/complete`);
+  }
 }
