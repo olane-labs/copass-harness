@@ -7,13 +7,43 @@ import type {
   DataSourceListResponse,
 } from '../types/sources.js';
 import type { StatusResponse } from '../types/sandboxes.js';
+import type { IngestTextRequest, IngestJobResponse } from '../types/ingest.js';
 
 const base = (sandboxId: string) => `/api/v1/storage/sandboxes/${sandboxId}/sources`;
+const ingestBase = (sandboxId: string) =>
+  `/api/v1/storage/sandboxes/${sandboxId}/ingest`;
 
 /**
- * Data sources resource — external providers that feed data into a sandbox.
+ * Data sources resource — the unit of attribution for everything ingested
+ * into a sandbox. Register the source once, then push every byte through it.
  *
- * All operations are sandbox-scoped.
+ * The harness is **data-source driven**: ingestion is not a standalone action
+ * but something a source does. `client.sources.ingest(sandboxId, sourceId, …)`
+ * is the primary path; the bare `client.ingest.text(…)` shorthand exists only
+ * for quick starts and untagged experiments.
+ *
+ * ## Ingestion modes
+ *
+ * Each data source declares an `ingestion_mode` describing who drives the
+ * push:
+ *
+ * - `manual` — your backend pushes bytes via
+ *   {@link SourcesResource.ingest}. Copass never reaches out to the provider;
+ *   the source record carries provenance, config, and lifecycle state.
+ * - `polling` — same push semantics, but your workers (or a future Copass
+ *   scheduler) call `ingest` on `poll_interval_seconds` cadence.
+ * - `realtime` — same push semantics, driven by provider webhooks handled in
+ *   your backend.
+ *
+ * Note: `last_sync_at` is maintained server-side (set by the service layer
+ * on successful ingest) and exposed as a read-only field on `DataSource`.
+ * It cannot be written via `update()` and there is no public endpoint to
+ * force-stamp it from the client.
+ *
+ * In every mode the server-side path is identical — a data source handle
+ * feeding bytes into `/api/v1/storage/sandboxes/{sid}/ingest`. The mode is
+ * metadata that tells Copass (and your operators) how the source is expected
+ * to be driven.
  */
 export class SourcesResource extends BaseResource {
   async register(sandboxId: string, request: CreateDataSourceRequest): Promise<DataSource> {
@@ -53,4 +83,25 @@ export class SourcesResource extends BaseResource {
   async del(sandboxId: string, sourceId: string): Promise<StatusResponse> {
     return this.delete<StatusResponse>(`${base(sandboxId)}/${sourceId}`);
   }
+
+  /**
+   * Push bytes into the sandbox's ingestion pipeline attributed to this
+   * data source. This is the primary ingestion path — every event you send
+   * should come through a registered source so origin, lifecycle, and
+   * provenance stay coherent.
+   *
+   * Equivalent to calling
+   * `client.ingest.textInSandbox(sandboxId, { ...request, data_source_id: sourceId })`.
+   */
+  async ingest(
+    sandboxId: string,
+    sourceId: string,
+    request: Omit<IngestTextRequest, 'data_source_id'>,
+  ): Promise<IngestJobResponse> {
+    return this.post<IngestJobResponse>(ingestBase(sandboxId), {
+      ...request,
+      data_source_id: sourceId,
+    });
+  }
+
 }

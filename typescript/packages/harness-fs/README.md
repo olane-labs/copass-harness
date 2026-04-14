@@ -14,6 +14,10 @@ npm install @copass/harness-fs @copass/core
 
 ### Full project indexing
 
+Ingestion is **data-source driven**. Register a sandbox, register a data
+source inside it (e.g. a `filesystem` source describing the repo), and pass
+both ids into `runFullIndex`.
+
 ```typescript
 import { CopassClient } from '@copass/core';
 import { runFullIndex } from '@copass/harness-fs';
@@ -22,8 +26,22 @@ const client = new CopassClient({
   auth: { type: 'api-key', key: 'olk_...' },
 });
 
+const sandbox = await client.sandboxes.create({
+  name: 'repo-index',
+  owner_id: 'owner-uuid',
+});
+
+const source = await client.sources.register(sandbox.sandbox_id, {
+  provider: 'filesystem',
+  name: 'my-repo',
+  ingestion_mode: 'manual',
+  adapter_config: { root: '/path/to/project' },
+});
+
 const summary = await runFullIndex(client, {
   projectPath: '/path/to/project',
+  sandboxId: sandbox.sandbox_id,
+  dataSourceId: source.data_source_id,
   onProgress: (msg) => console.log(msg),
 });
 
@@ -37,10 +55,13 @@ import { ProjectWatchRuntime } from '@copass/harness-fs';
 
 const watcher = new ProjectWatchRuntime(client, {
   projectPath: '/path/to/project',
+  sandboxId: sandbox.sandbox_id,
+  dataSourceId: source.data_source_id,
+  // projectId: 'optional-existing-project-id',
 });
 
 await watcher.start();
-// Files are automatically ingested on change
+// Every file event is pushed via client.sources.ingest(sandboxId, sourceId, ...)
 // Call watcher.stop() to shut down
 ```
 

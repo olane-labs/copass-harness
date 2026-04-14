@@ -7,6 +7,7 @@ npm workspaces monorepo for Copass TypeScript packages.
 | Package | Description | Path |
 |---------|-------------|------|
 | [`@copass/core`](./packages/core/) | Core client SDK | `packages/core/` |
+| [`@copass/harness-fs`](./packages/harness-fs/) | Filesystem ingestion, watching, and indexing | `packages/harness-fs/` |
 
 ## Development
 

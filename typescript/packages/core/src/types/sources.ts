@@ -3,15 +3,13 @@ export type DataSourceProvider =
   | 'github'
   | 'linear'
   | 'gmail'
-  | 'gcal'
+  | 'jira'
   | 'notion'
-  | 'drive'
   | 'custom'
   | string;
 
 export type DataSourceIngestionMode = 'realtime' | 'polling' | 'batch' | 'manual';
 export type DataSourceStatus =
-  | 'pending'
   | 'active'
   | 'paused'
   | 'disconnected'
@@ -40,6 +38,7 @@ export interface CreateDataSourceRequest {
   ingestion_mode?: DataSourceIngestionMode;
   external_account_id?: string;
   adapter_config?: Record<string, unknown>;
+  /** Minimum 60 seconds enforced server-side. Only meaningful for `polling` mode. */
   poll_interval_seconds?: number;
 }
 
@@ -48,6 +47,7 @@ export interface UpdateDataSourceRequest {
   ingestion_mode?: DataSourceIngestionMode;
   external_account_id?: string;
   adapter_config?: Record<string, unknown>;
+  /** Minimum 60 seconds enforced server-side. */
   poll_interval_seconds?: number;
 }
 

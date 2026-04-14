@@ -53,13 +53,19 @@ export async function runFullIndex(
   }
 
   // 2. Resolve or create a storage project inside the caller's sandbox.
-  // Caller must supply sandboxId; projectId optional (defaults to a new project).
+  // Caller must supply sandboxId + dataSourceId; projectId optional.
   if (!options.sandboxId) {
     throw new Error(
       'runFullIndex requires `sandboxId`. Create one with client.sandboxes.create() or pass the caller\'s primary sandbox_id.',
     );
   }
+  if (!options.dataSourceId) {
+    throw new Error(
+      'runFullIndex requires `dataSourceId`. Register a source with client.sources.register(sandboxId, { provider: "filesystem", ... }) and pass its data_source_id.',
+    );
+  }
   const sandboxId = options.sandboxId;
+  const dataSourceId = options.dataSourceId;
 
   let projectId = options.projectId;
   if (!projectId) {
@@ -94,7 +100,7 @@ export async function runFullIndex(
         processedContent = applyTransforms(content, pipeline.transforms);
       }
 
-      await client.ingest.textInSandbox(sandboxId, {
+      await client.sources.ingest(sandboxId, dataSourceId, {
         text: processedContent,
         source_type: pipeline?.source_type ?? 'code',
         project_id: projectId,

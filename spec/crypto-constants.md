@@ -22,8 +22,8 @@ Used to derive the Data Encryption Key from the user's master key.
 
 ## Reference Implementations
 
-- **TypeScript:** `o-network-cli/src/crypto/constants.ts`
-- **Python:** `frame_graph/crypto_constants.py`
+- **TypeScript:** `typescript/packages/core/src/crypto/constants.ts`
+- **Python (server):** `frame_graph/copass_id/crypto/constants.py`
 
 ## Verification
 

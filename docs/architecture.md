@@ -10,8 +10,12 @@ The Copass harness SDK is organized in four layers. Each language implementation
 │  Composes resources with shared auth/config  │
 ├─────────────────────────────────────────────┤
 │  Resources                                   │  ← One per API domain
-│  extraction · cosync · matrix · projects     │
-│  entities · plans · users · api-keys · usage │
+│  Storage (copass-id):                        │
+│    sandboxes · sources · projects            │
+│    vault · ingest                            │
+│  Knowledge graph:                            │
+│    matrix · cosync · plans · entities        │
+│    users · api-keys · usage                  │
 ├─────────────────────────────────────────────┤
 │  HTTP Layer                                  │  ← Transport
 │  Fetch-based client · retry · errors         │
@@ -54,17 +58,33 @@ This pattern scales cleanly -- adding a new API domain means adding one resource
 
 Each resource maps to a group of related backend endpoints:
 
+**Storage layer (copass-id, `/api/v1/storage/*`):**
+
 | Resource | Endpoints | Purpose |
 |----------|-----------|---------|
-| `extraction` | `/extract`, `/extract/code`, `/extract/file`, `/extract/jobs/*` | Ingest code, text, files |
+| `sandboxes` | `/storage/sandboxes/*` | Tenancy unit CRUD + suspend/reactivate/archive/destroy |
+| `sources` | `/storage/sandboxes/{sid}/sources/*` | Data source registration + pause/resume/disconnect |
+| `projects` | `/storage/sandboxes/{sid}/projects/*` | Sandbox-scoped projects + link/unlink data sources |
+| `vault` | `/storage/sandboxes/{sid}/vault/{key:path}` | Encrypted raw-bytes KV with optional dedup |
+| `ingest` | `/storage/ingest`, `/storage/sandboxes/{sid}/ingest` | Chunking + ontology ingestion jobs |
+
+**Knowledge-graph layer (`/api/v1/*`):**
+
+| Resource | Endpoints | Purpose |
+|----------|-----------|---------|
+| `matrix` | `/matrix/query` | Natural language search |
 | `cosync` | `/cosync` | Knowledge confidence scoring |
 | `plans` | `/plans/cosync` | Plan-level knowledge scoring (v2) |
-| `matrix` | `/matrix/query` | Natural language search |
-| `projects` | `/projects/*` | Project registration and status |
-| `entities` | `/users/me/canonical-entities/*` | Canonical entity management |
-| `users` | `/users/me/profile` | User profile management |
+| `entities` | `/users/me/canonical-entities/*`, `/users/me/entities/search` | Canonical entity query + search |
+| `users` | `/users/me/profile` (GET/POST) | User profile |
 | `apiKeys` | `/api-keys/*` | API key CRUD |
-| `usage` | `/usage`, `/usage/balance` | Token consumption tracking |
+| `usage` | `/usage`, `/usage/credits` | Token consumption + credit balance |
+
+> Ingestion is **data-source driven**. In production, push through
+> `client.sources.ingest(sandboxId, sourceId, …)` so every event carries a
+> `data_source_id`; `client.ingest.text(…)` is a shorthand for quick starts
+> and REPL experiments. The legacy `/api/v1/extract/*` and `/api/v1/projects/*`
+> (indexing) endpoints are deprecated and no longer exposed by the SDK.
 
 ## HTTP Layer
 
@@ -74,7 +94,7 @@ The internal HTTP client handles:
 - **Encryption header** -- `X-Encryption-Token: <session-token>` when encryption is configured
 - **Retry with backoff** -- Configurable exponential/linear/fixed backoff for transient failures
 - **Error normalization** -- HTTP errors become typed `CopassApiError` instances with status, body, and request context
-- **Content negotiation** -- JSON for most requests, multipart/form-data for file uploads
+- **Content negotiation** -- JSON by default; raw bytes for vault PUT/GET (caller-supplied `Content-Type`); multipart/form-data for file uploads
 
 The HTTP layer uses the platform's native `fetch` (Node 18+, browsers, Deno, Cloudflare Workers).
 

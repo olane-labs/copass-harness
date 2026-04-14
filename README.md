@@ -28,11 +28,13 @@ const result = await client.matrix.query({ query: 'How does authentication work?
 // Knowledge scoring
 const score = await client.cosync.score({ canonical_ids: ['entity-uuid'] });
 
-// Code ingestion
-await client.extraction.extractCode({
-  code: 'function hello() { return "world"; }',
-  language: 'typescript',
+// Ingestion — routes through the copass-id storage layer.
+// Auto-resolves the caller's primary sandbox + default project.
+const job = await client.ingest.text({
+  text: 'function hello() { return "world"; }',
+  source_type: 'code',
 });
+const status = await client.ingest.getJob(job.job_id);
 ```
 
 ## Documentation

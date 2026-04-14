@@ -74,6 +74,8 @@ export interface WatchRuntimeOptions {
   maxFiles?: number;
   /** Sandbox to ingest into. Required. */
   sandboxId: string;
+  /** Data source to attribute every file event to. Required — ingestion is source-driven. */
+  dataSourceId: string;
   /** Storage project id. Optional — leave unset to ingest into the sandbox's default project. */
   projectId?: string;
 }
@@ -88,6 +90,8 @@ export interface FullIndexOptions {
   onProgress?: (msg: string) => void;
   /** Sandbox to ingest into. Required. */
   sandboxId: string;
+  /** Data source to attribute every file event to. Required — ingestion is source-driven. */
+  dataSourceId: string;
   /** Storage project id. If omitted, a new sandbox-scoped project is created. */
   projectId?: string;
 }

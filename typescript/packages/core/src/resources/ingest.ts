@@ -10,18 +10,26 @@ const explicitBase = (sandboxId: string) =>
   `/api/v1/storage/sandboxes/${sandboxId}/ingest`;
 
 /**
- * Ingest resource — submit data for chunking and downstream ontology ingestion.
+ * Ingest resource — low-level handle to the chunking + ontology ingestion
+ * pipeline. Prefer {@link SourcesResource.ingest} for normal use: the harness
+ * is **data-source driven**, so every production event should be attributed
+ * to a registered data source.
  *
- * This replaces the deprecated `/api/v1/extract/*` endpoints. All ingestion
- * now flows through the copass-id storage layer, which resolves a sandbox,
- * dispatches a chunking job, and passes the DEK through the queue ephemerally
- * when encryption is active.
+ * Use this resource directly only for:
+ *  - Quick-start / REPL experiments via {@link text}
+ *  - Polling or retrieving job status via {@link getJob} / {@link getSandboxJob}
+ *
+ * All ingestion flows through the copass-id storage layer, which resolves a
+ * sandbox, dispatches a chunking job, and passes the DEK through the queue
+ * ephemerally when encryption is active. The deprecated `/api/v1/extract/*`
+ * endpoints are no longer supported.
  *
  * Two entry points:
  *  - {@link text}: shorthand that auto-resolves the caller's primary sandbox
- *    and default project. Preferred for single-sandbox users.
- *  - {@link textInSandbox}: explicit sandbox_id for callers managing multiple
- *    sandboxes.
+ *    and default project. Untagged — no data source attribution.
+ *  - {@link textInSandbox}: explicit sandbox_id. Pass `data_source_id` to
+ *    attribute the event, or prefer `client.sources.ingest(...)` which wires
+ *    it for you.
  */
 export class IngestResource extends BaseResource {
   /**

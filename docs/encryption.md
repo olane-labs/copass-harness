@@ -10,9 +10,9 @@ Master Key (user secret)
     ▼ HKDF-SHA256
 Data Encryption Key (DEK)
     │
-    ├──▶ AES-256-GCM encrypt payload → { encrypted_text, iv, tag }
+    ├──▶ Wrap DEK with access token → session_token (X-Encryption-Token header)
     │
-    └──▶ Wrap DEK with access token → session_token (sent as header)
+    └──▶ Server unwraps DEK and encrypts stored chunks / vault objects at rest
 ```
 
 ## Key Derivation
@@ -59,25 +59,38 @@ The session token is sent as the `X-Encryption-Token` header.
 
 ## Payload Encryption
 
-To encrypt a request payload field (e.g., `text`):
+### Storage ingestion (`/api/v1/storage/ingest`)
 
-**Step 1:** Generate a random 12-byte IV.
+Ingestion uses **server-side encryption driven by the caller's DEK**. The
+client sends plaintext JSON (e.g. `{ "text": "..." }`) with the
+`X-Encryption-Token` header set. The server unwraps the DEK and encrypts the
+resulting chunks and job payloads at rest; the DEK flows through the job queue
+ephemerally. The client does not construct `encrypted_text`/`encryption_iv`/
+`encryption_tag` fields itself.
 
-**Step 2:** Encrypt the plaintext with AES-256-GCM:
-```
-{ ciphertext, tag } = AES-256-GCM-encrypt(key=DEK, iv=iv, plaintext=text_bytes)
-```
+### Vault objects (`/api/v1/storage/sandboxes/{sid}/vault/{key:path}`)
 
-**Step 3:** Base64-encode all components:
+Vault `PUT` writes raw bytes. Pass `?encrypt=true` along with the
+`X-Encryption-Token` header to have the server encrypt the object at rest under
+a sandbox-scoped key. `GET` with `decrypt=true` (default) decrypts on read.
+
+### Legacy `encrypted_text` payload shape (deprecated)
+
+The retired `/api/v1/extract/*` endpoints accepted a payload with client-side
+pre-encrypted fields:
+
 ```json
 {
   "encrypted_text": base64(ciphertext),
-  "encryption_iv": base64(iv),
+  "encryption_iv":  base64(iv),
   "encryption_tag": base64(tag)
 }
 ```
 
-These fields replace the plaintext `text` field in the request body.
+Those endpoints are removed from the SDK. The `encryptAesGcm` / `decryptAesGcm`
+primitives remain exported from `@copass/harness` for advanced callers who need
+to encrypt content out-of-band (e.g., before uploading to the vault manually),
+but no first-party resource on `CopassClient` constructs that payload shape.
 
 ## Crypto Constants
 
@@ -103,14 +116,15 @@ All SDKs MUST use these exact constants (see also `spec/crypto-constants.md`):
 
 ## When Encryption is Required
 
-Encryption is optional for most endpoints. When provided:
-- The `X-Encryption-Token` header enables the server to decrypt
-- Request bodies use `encrypted_text` instead of `text`
-- The server decrypts before processing
+Encryption is optional. When configured (via `CopassClient({ encryptionKey })` or
+a Supabase session that derives one), the SDK automatically attaches the
+`X-Encryption-Token` header to every request. The server then encrypts
+ingestion and vault content at rest under the caller's DEK.
 
-Endpoints that never require encryption: project status, entity listing, usage, API key management.
+Endpoints that do not consume encrypted state (matrix query, cosync, entity
+listing, usage, API key management, sandbox metadata) simply ignore the header.
 
 ## Reference Implementations
 
-- **TypeScript:** `o-network-cli/src/crypto/` (Node.js `crypto` module)
-- **Python:** `frame_graph/crypto_constants.py` + `frame_graph/api/utils/session_token.py`
+- **TypeScript:** `typescript/packages/core/src/crypto/` (Node.js `crypto` + `SubtleCrypto`)
+- **Python (server side):** `frame_graph/copass_id/crypto/` and `frame_graph/api/utils/session_token.py`

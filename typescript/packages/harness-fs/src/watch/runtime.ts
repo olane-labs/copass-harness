@@ -30,6 +30,7 @@ export class ProjectWatchRuntime {
   private readonly service: boolean;
   private readonly maxFiles?: number;
   private readonly sandboxId: string;
+  private readonly dataSourceId: string;
   private readonly projectId?: string;
   private watcher: FSWatcher | null = null;
   private pendingUpserts = new Set<string>();
@@ -40,12 +41,18 @@ export class ProjectWatchRuntime {
     if (!options.sandboxId) {
       throw new Error('ProjectWatchRuntime requires options.sandboxId');
     }
+    if (!options.dataSourceId) {
+      throw new Error(
+        'ProjectWatchRuntime requires options.dataSourceId — ingestion is source-driven. Register a filesystem source with client.sources.register(...) and pass its id.',
+      );
+    }
     this.client = client;
     this.projectPath = options.projectPath;
     this.config = options.config ?? defaultProjectConfig();
     this.service = options.service ?? false;
     this.maxFiles = options.maxFiles;
     this.sandboxId = options.sandboxId;
+    this.dataSourceId = options.dataSourceId;
     this.projectId = options.projectId;
   }
 
@@ -131,7 +138,7 @@ export class ProjectWatchRuntime {
         const language = detectLanguage(op.path, this.config.indexing.extra_languages);
         void language;
 
-        await this.client.ingest.textInSandbox(this.sandboxId, {
+        await this.client.sources.ingest(this.sandboxId, this.dataSourceId, {
           text: content,
           source_type: 'code',
           project_id: this.projectId,
@@ -211,7 +218,7 @@ export class ProjectWatchRuntime {
         void language;
         const stat = await fs.stat(absolutePath);
 
-        await this.client.ingest.textInSandbox(this.sandboxId, {
+        await this.client.sources.ingest(this.sandboxId, this.dataSourceId, {
           text: content,
           source_type: 'code',
           project_id: this.projectId,

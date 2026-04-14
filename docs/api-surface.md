@@ -58,13 +58,32 @@ Destroy sandbox and cascade-delete its data sources and projects.
 
 ## Storage · Data Sources
 
-Nested under a sandbox. Represent external providers feeding data into the system.
+Nested under a sandbox. Every ingested byte is attributed to a data source —
+register the source first, then push through it.
+
+> **Ingestion is data-source driven.** The `ingestion_mode` on a source
+> describes *who drives the push*, not a different endpoint:
+>
+> - **`manual`** — your backend pushes bytes via
+>   `client.sources.ingest(sandboxId, sourceId, …)` (which hits
+>   `POST /api/v1/storage/sandboxes/{sid}/ingest` with `data_source_id` set).
+> - **`polling`** — same push, invoked by your workers on `poll_interval_seconds`
+>   cadence (minimum 60 s). `last_sync_at` is stamped server-side on each
+>   successful `ingest`.
+> - **`realtime`** — same push, invoked from provider webhook handlers you
+>   run. A `webhook_url` is generated on registration but is not yet served
+>   by the Copass backend; wire it when server-side webhook handling lands.
+>
+> In every mode the wire path is identical. The mode is metadata that tells
+> Copass (and your operators) how a source is expected to be driven. A
+> future Copass scheduler / webhook router may take over the `polling` /
+> `realtime` drivers without any client change.
 
 ### `POST /api/v1/storage/sandboxes/{sandbox_id}/sources`
 **Request body:**
 ```json
 {
-  "provider": "slack|github|linear|gmail|gcal|notion|drive|custom",
+  "provider": "slack|github|linear|gmail|jira|notion|custom",
   "name": "string",
   "ingestion_mode": "realtime|polling|batch|manual",
   "external_account_id": "string (optional)",
@@ -72,6 +91,10 @@ Nested under a sandbox. Represent external providers feeding data into the syste
   "poll_interval_seconds": 300
 }
 ```
+
+`poll_interval_seconds` must be ≥ 60 when present. `webhook_url` and
+`last_sync_at` are server-maintained and returned on the response only —
+they cannot be set via `POST` or `PATCH`.
 
 ### `GET /api/v1/storage/sandboxes/{sandbox_id}/sources`
 Query: `provider?`, `status?`.
@@ -136,7 +159,11 @@ List keys under a prefix. Query: `prefix?`, `max_keys?` (1–10000, default 1000
 
 ## Storage · Ingestion
 
-The only supported ingestion path. Dispatches a chunking job that owns downstream ontology ingestion. Returns `202` with a `job_id` for polling.
+The transport beneath the data-source flow. In production, call
+`client.sources.ingest(sandboxId, sourceId, …)` and let it set
+`data_source_id` for you — these endpoints are the wire format, not the
+recommended DX entry point. Dispatches a chunking job that owns downstream
+ontology ingestion. Returns `202` with a `job_id` for polling.
 
 ### Shorthand (auto-resolves primary sandbox + default project)
 
