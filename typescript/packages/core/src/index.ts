@@ -24,6 +24,14 @@ export type {
   ResponseMiddleware,
 } from './http/http-client.js';
 
+// Data sources
+export { BaseDataSource, ensureDataSource } from './data-sources/index.js';
+export type {
+  BaseDataSourceOptions,
+  PushOptions,
+  EnsureDataSourceOptions,
+} from './data-sources/index.js';
+
 // Resources
 export { BaseResource } from './resources/base.js';
 export { SandboxesResource } from './resources/sandboxes.js';

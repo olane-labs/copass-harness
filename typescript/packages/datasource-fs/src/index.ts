@@ -1,3 +1,10 @@
+// Data source driver (primary entry point)
+export { FileSystemDataSource } from './file-system-data-source.js';
+export type {
+  FileSystemDataSourceOptions,
+  CreateFileSystemDataSourceOptions,
+} from './file-system-data-source.js';
+
 // Types
 export type * from './types.js';
 

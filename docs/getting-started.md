@@ -122,6 +122,36 @@ console.log(status.children); // child-job aggregation when this is a parent chu
 `last_sync_at` is stamped server-side on each successful `ingest` call, so
 polling / realtime drivers do not need to write it from the client.
 
+### Writing your own data source driver
+
+For custom providers, extend `BaseDataSource` from `@copass/core`:
+
+```typescript
+import { BaseDataSource, ensureDataSource } from '@copass/core';
+
+class SlackDataSource extends BaseDataSource {
+  async pushMessage(text: string) {
+    return this.push(text, { sourceType: 'conversation' });
+  }
+}
+
+const source = await ensureDataSource(client, sandbox.sandbox_id, {
+  provider: 'slack',
+  name: 'engineering-workspace',
+  ingestion_mode: 'manual',
+});
+
+const slack = new SlackDataSource({
+  client,
+  sandboxId: sandbox.sandbox_id,
+  dataSourceId: source.data_source_id,
+});
+await slack.pushMessage('deploy shipping now');
+```
+
+The `@copass/datasource-fs` package ships a ready-made `FileSystemDataSource`
+driver built on this abstraction.
+
 ### Shorthand (no source attribution)
 
 For REPL / quick-start work, `client.ingest.text` auto-resolves the caller's

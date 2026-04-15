@@ -9,6 +9,9 @@ The Copass harness SDK is organized in four layers. Each language implementation
 │  CopassClient                               │  ← Public entry point
 │  Composes resources with shared auth/config  │
 ├─────────────────────────────────────────────┤
+│  Data Source Drivers                         │  ← BaseDataSource (core)
+│  FileSystemDataSource (@copass/datasource-fs)│    + per-provider subclasses
+├─────────────────────────────────────────────┤
 │  Resources                                   │  ← One per API domain
 │  Storage (copass-id):                        │
 │    sandboxes · sources · projects            │

@@ -23,6 +23,11 @@ Thumbs.db
 # Test
 coverage/
 
+# Lerna
+lerna-debug.log
+.nx/cache
+.nx/workspace-data
+
 # Python
 __pycache__/
 *.pyc

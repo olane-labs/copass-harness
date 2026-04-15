@@ -1,7 +1,11 @@
 {
-  "name": "@copass/harness-fs",
+  "name": "@copass/datasource-fs",
   "version": "0.1.0",
-  "description": "Filesystem ingestion, watching, and indexing for the Copass knowledge graph",
+  "description": "Filesystem data source driver for Copass — scans, watches, and pushes file events through the copass-id storage layer",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -44,7 +48,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/olane-labs/copass-harness.git",
-    "directory": "typescript/packages/harness-fs"
+    "directory": "typescript/packages/datasource-fs"
   },
   "engines": {
     "node": ">=18.0.0"

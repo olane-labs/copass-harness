@@ -44,3 +44,30 @@ This is a multi-language SDK repository. Each language lives in its own top-leve
 - Include tests for new functionality
 - Ensure CI passes before requesting review
 - Update relevant documentation if the API surface changes
+
+## Commit messages
+
+TypeScript packages are released with Lerna in independent mode, driven by
+[Conventional Commits](https://www.conventionalcommits.org/). Prefix commits
+that affect a publishable package with one of:
+
+- `fix: ...` — patch bump
+- `feat: ...` — minor bump
+- `feat!: ...` or `BREAKING CHANGE:` footer — major bump
+- `chore:`, `docs:`, `refactor:`, `test:`, `ci:` — no bump
+
+Scope with the package name when relevant: `feat(core): ...`,
+`fix(datasource-fs): ...`.
+
+## Releasing TypeScript packages
+
+See [`typescript/RELEASING.md`](./typescript/RELEASING.md). In short:
+
+```bash
+cd typescript
+npm run version    # bumps, tags, pushes
+npm run release    # builds and publishes
+```
+
+Or trigger the `release-typescript` GitHub Actions workflow from the Actions
+tab.

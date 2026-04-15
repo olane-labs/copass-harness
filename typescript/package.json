@@ -10,13 +10,22 @@
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces",
     "format": "prettier --write 'packages/*/src/**/*.ts'",
-    "format:check": "prettier --check 'packages/*/src/**/*.ts'"
+    "format:check": "prettier --check 'packages/*/src/**/*.ts'",
+    "version": "lerna version --conventional-commits",
+    "version:graduate": "lerna version --conventional-commits --conventional-graduate",
+    "version:prerelease": "lerna version --conventional-commits --conventional-prerelease --preid next",
+    "release": "npm run build && lerna publish from-package",
+    "release:prerelease": "npm run build && lerna publish from-package --dist-tag next",
+    "release:dry": "npm run build && lerna exec --no-bail -- npm publish --dry-run --access public",
+    "changed": "lerna changed",
+    "diff": "lerna diff"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
+    "lerna": "^8.2.4",
     "prettier": "^3.4.0",
     "typescript": "^5.6.0"
   }
