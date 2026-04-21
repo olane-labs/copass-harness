@@ -1,4 +1,4 @@
-import { CopassClient } from '@copass/core';
+import { CopassClient, type ContextWindow } from '@copass/core';
 
 let _client: CopassClient | null = null;
 
@@ -23,18 +23,33 @@ export function getSandboxId(): string {
 }
 
 /**
- * Create a new Copass Context Window for a conversation thread.
+ * Create a new Copass Context Window for a fresh conversation thread.
  *
- * The returned `dataSourceId` identifies the window. Persist it on your side
- * (or return it to the client as a threadId) so subsequent turns can reuse
- * the same window — retrieval becomes window-aware automatically.
+ * The returned window's `dataSourceId` identifies the thread. Persist it on
+ * your side (or return it to the client as a threadId) so subsequent turns
+ * can reuse the same window.
  */
-export async function createThread(): Promise<{ dataSourceId: string }> {
+export async function createThread(): Promise<ContextWindow> {
   const client = getCopass();
-  const sandbox_id = getSandboxId();
-  const window = await client.contextWindow.create({
-    sandbox_id,
+  return client.contextWindow.create({
+    sandbox_id: getSandboxId(),
     project_id: process.env.COPASS_PROJECT_ID || undefined,
   });
-  return { dataSourceId: window.dataSourceId };
+}
+
+/**
+ * Reattach to an existing Context Window by `data_source_id`, seeding the
+ * local turn buffer with whatever turns you've tracked on your side. Used
+ * on cold starts / server restarts where the in-memory window was lost.
+ */
+export async function attachThread(
+  dataSourceId: string,
+  initialTurns?: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+): Promise<ContextWindow> {
+  const client = getCopass();
+  return client.contextWindow.attach({
+    sandbox_id: getSandboxId(),
+    data_source_id: dataSourceId,
+    initialTurns,
+  });
 }

@@ -129,6 +129,47 @@ Your Copass sandbox has nothing ingested. Run `copass ingest <file>` before chat
 - [`@copass/mcp`](https://www.npmjs.com/package/@copass/mcp) — MCP server exposing Copass retrieval + Context Window
 - [`@copass/core`](https://www.npmjs.com/package/@copass/core) — client SDK for Context Window lifecycle
 
+## Production limitations
+
+**This is starter code.** It's designed to get you from zero to a working agent loop in under two minutes, not to run a production workload. Before you deploy this behind real users, walk through the list below — each item is a deliberate scaffold-level simplification, not a bug.
+
+### State persistence
+
+- **`threadWindows` and `threadSessions` are in-memory `Map`s.** A server restart loses every active thread's session and local turn buffer. Clients that kept their `threadId` from a prior run will fall through to `attachThread(dataSourceId, [])` and retrieval push-down will re-ramp from an empty history — content is still retrievable from the data source, but cross-turn exclusion rebuilds from zero.
+- **Fix for prod:** back both maps with Redis / Postgres / Durable Objects / whatever you already use. Serialize `ChatMessage[]` alongside the session id, or call an API the server's keeping fresh.
+
+### Scale
+
+- **Subprocess-per-turn.** Every `POST /chat` spawns a fresh `@copass/mcp` child process via `npx`. Expect ~200–500 ms cold-start overhead per request. Fine for dev and low-volume prod; a concern at real QPS.
+  - **Fix for prod:** pre-install `@copass/mcp` locally and change `command: 'npx'` to an absolute path. Or hold the MCP subprocess open across turns (requires reworking the Agent SDK invocation and keeping the MCP process's active window aligned with the HTTP thread).
+- **`COPASS_CONTEXT_WINDOW_INITIAL_TURNS` is capped at the last 50 turns.** OS env-var size limits are ~128 KB–1 MB depending on platform; 50 turns of ordinary chat stays well under, but very long conversations silently lose earlier context for push-down exclusion (content still lives in the data source, just doesn't feed the filter).
+  - **Fix for prod:** serialize turns to a file path and pass via `COPASS_CONTEXT_WINDOW_INITIAL_TURNS_FILE` (you'd add the env var to `@copass/mcp`), or swap the subprocess model entirely.
+- **Non-streaming responses.** `chat()` collects the Agent SDK's AsyncGenerator into a single string and returns JSON. First-token latency shows up as end-to-end latency.
+  - **Fix for prod:** swap the JSON response for SSE in `src/index.ts` — the `query()` result already streams per-chunk.
+
+### Security
+
+- **No auth on `POST /chat`.** Anyone who can reach `:3000` can use your `ANTHROPIC_API_KEY` and your Copass sandbox. Hand on the scaffold assumes a localhost-only dev environment.
+  - **Fix for prod:** add middleware in `src/index.ts` (Hono has first-party helpers for JWT, API keys, Clerk/Supabase auth).
+- **No rate limiting or cost caps.** A runaway prompt (or a malicious caller) can burn an agent loop's `maxTurns: 10` on every request and rack up model spend. The Agent SDK supports `maxBudgetUsd` — not set in the scaffold.
+  - **Fix for prod:** add `maxBudgetUsd` in `src/agent.ts` and rate-limit at the HTTP layer.
+- **No tenant isolation in the chat UI.** `localStorage` is per-browser; there's no per-user session. Every visitor to the URL shares the same server-side map.
+
+### Observability
+
+- No request logging, no metrics, no tracing. `console.log` + `console.error` only.
+- **Fix for prod:** plug in OpenTelemetry or your preferred APM. The Claude Agent SDK surfaces spans out of the box when a collector is configured.
+
+### Window-awareness edge cases
+
+- **First turn after a server restart is not window-aware** (by design — we can't reconstruct the local turn buffer from thin air). Impact is bounded: push-down exclusion rebuilds as new turns accumulate, and all prior content remains retrievable as graph chunks.
+- **If the caller ever forgets to pass `threadId`**, the server creates a brand-new Context Window, so the conversation visually continues in the client but the retrieval layer starts fresh. The embedded UI handles this correctly via `localStorage`; custom frontends need to do the same.
+
+### Dependencies
+
+- `@copass/core@^0.2.0` and `@copass/mcp@^0.1.0` may not be on npm yet — see the *Troubleshooting* section above for the workaround.
+- The Claude Agent SDK is a beta API (`0.2.x`). Expect breaking changes across minor versions until `1.0`.
+
 ## License
 
 MIT

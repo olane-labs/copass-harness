@@ -1,4 +1,5 @@
 import { query, type Options } from '@anthropic-ai/claude-agent-sdk';
+import type { ContextWindow } from '@copass/core';
 
 const SYSTEM_PROMPT = `You are a knowledgeable assistant grounded in the user's Copass knowledge graph.
 
@@ -6,14 +7,18 @@ For every user turn:
 1. Start with \`mcp__copass__discover\` to see what's relevant. Cheap and fast.
 2. If specific items look valuable, call \`mcp__copass__interpret\` on their canonical_ids tuples for a brief.
 3. If the question is broad and self-contained, prefer \`mcp__copass__search\` for a direct synthesized answer.
-4. Record user questions with \`mcp__copass__context_window_add_turn\` ({role: "user", content: ...}) and your replies with ({role: "assistant", content: ...}) — this keeps retrieval window-aware across turns.
 
-Keep answers concise. Cite canonical_ids where it helps the user verify.`;
+Keep answers concise. Cite canonical_ids where it helps the user verify.
+
+Turn history is tracked for you automatically — retrieval is already aware of prior turns in this conversation. Do NOT call \`mcp__copass__context_window_*\` tools; they're managed by the hosting server.`;
+
+/** Cap on turns serialized into the MCP subprocess env var to keep env size reasonable. */
+const MAX_INITIAL_TURNS = 50;
 
 export interface ChatArgs {
   message: string;
-  /** The Copass Context Window data_source_id for this thread. */
-  dataSourceId: string;
+  /** The Context Window for this conversation thread. */
+  window: ContextWindow;
   /** Agent SDK session id to resume, if any. Empty on first turn. */
   resumeSessionId?: string;
 }
@@ -26,21 +31,28 @@ export interface ChatResult {
 /**
  * Run one turn of the agent loop.
  *
- * Spawns `@copass/mcp` as a stdio MCP subprocess with the Context Window
- * pre-attached (via `COPASS_CONTEXT_WINDOW_ID`). Claude sees the full
- * `discover` / `interpret` / `search` / `context_window_*` / `ingest` tool
- * surface and chooses which to call on each step.
+ * Spawns `@copass/mcp` as a stdio MCP subprocess with:
+ * - `COPASS_CONTEXT_WINDOW_ID`: the thread's data_source_id so the subprocess
+ *   attaches to the right window
+ * - `COPASS_CONTEXT_WINDOW_INITIAL_TURNS`: JSON-serialized recent turns so
+ *   retrieval is window-aware from the very first tool call (subprocesses
+ *   are ephemeral; without this, the local buffer would reset every spawn)
  *
- * On subsequent turns, pass `resumeSessionId` to resume the Agent SDK's
- * persisted conversation so Claude sees the full chat history.
+ * On subsequent turns, pass `resumeSessionId` so the Agent SDK restores the
+ * conversation and Claude sees its own prior replies in context.
  */
 export async function chat(args: ChatArgs): Promise<ChatResult> {
-  const { message, dataSourceId, resumeSessionId } = args;
+  const { message, window, resumeSessionId } = args;
+
+  // The Hono server calls window.addTurn before + after this function, so
+  // window.getTurns() already includes the just-arrived user message.
+  const recentTurns = window.getTurns().slice(-MAX_INITIAL_TURNS);
 
   const env: Record<string, string> = {
     COPASS_API_KEY: process.env.COPASS_API_KEY ?? '',
     COPASS_SANDBOX_ID: process.env.COPASS_SANDBOX_ID ?? '',
-    COPASS_CONTEXT_WINDOW_ID: dataSourceId,
+    COPASS_CONTEXT_WINDOW_ID: window.dataSourceId,
+    COPASS_CONTEXT_WINDOW_INITIAL_TURNS: JSON.stringify(recentTurns),
   };
   if (process.env.COPASS_API_URL) env.COPASS_API_URL = process.env.COPASS_API_URL;
   if (process.env.COPASS_PROJECT_ID) env.COPASS_PROJECT_ID = process.env.COPASS_PROJECT_ID;

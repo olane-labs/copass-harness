@@ -25,10 +25,14 @@ async function main(): Promise<void> {
       const window = await client.contextWindow.attach({
         sandbox_id: config.sandbox_id,
         data_source_id: config.context_window_id,
+        initialTurns: config.context_window_initial_turns,
       });
       windows.set(window);
+      const turnCount = config.context_window_initial_turns?.length ?? 0;
       process.stderr.write(
-        `copass-mcp: attached to context window ${config.context_window_id}\n`,
+        `copass-mcp: attached to context window ${config.context_window_id}` +
+          (turnCount > 0 ? ` (${turnCount} initial turn${turnCount === 1 ? '' : 's'})` : '') +
+          '\n',
       );
     } catch (err) {
       process.stderr.write(

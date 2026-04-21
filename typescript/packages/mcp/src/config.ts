@@ -1,4 +1,4 @@
-import type { SearchPreset } from '@copass/core';
+import type { ChatMessage, SearchPreset } from '@copass/core';
 
 export interface ServerConfig {
   api_url: string;
@@ -15,6 +15,16 @@ export interface ServerConfig {
    * subprocess that should share it.
    */
   context_window_id?: string;
+  /**
+   * Optional pre-existing turns to seed the Context Window's buffer on
+   * startup. Makes retrieval immediately window-aware on the first tool
+   * call — without these, the first `discover` / `interpret` / `search`
+   * after a subprocess spawn sees an empty history.
+   *
+   * Required when `context_window_id` refers to a thread that has prior
+   * turns and the server should dedupe retrieval against them.
+   */
+  context_window_initial_turns?: ChatMessage[];
 }
 
 const VALID_PRESETS: readonly SearchPreset[] = ['fast', 'auto', 'max'] as const;
@@ -58,6 +68,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
 
   const ingest_data_source_id = env.COPASS_INGEST_DATA_SOURCE_ID?.trim() || undefined;
   const context_window_id = env.COPASS_CONTEXT_WINDOW_ID?.trim() || undefined;
+  const context_window_initial_turns = parseInitialTurns(
+    env.COPASS_CONTEXT_WINDOW_INITIAL_TURNS,
+  );
 
   return {
     api_url,
@@ -67,5 +80,46 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     preset: rawPreset as SearchPreset,
     ingest_data_source_id,
     context_window_id,
+    context_window_initial_turns,
   };
+}
+
+function parseInitialTurns(raw: string | undefined): ChatMessage[] | undefined {
+  if (!raw || !raw.trim()) return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new Error(
+      `@copass/mcp: COPASS_CONTEXT_WINDOW_INITIAL_TURNS is not valid JSON: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error(
+      '@copass/mcp: COPASS_CONTEXT_WINDOW_INITIAL_TURNS must be a JSON array of {role, content} objects',
+    );
+  }
+  const turns: ChatMessage[] = [];
+  for (const [i, entry] of parsed.entries()) {
+    if (
+      !entry ||
+      typeof entry !== 'object' ||
+      typeof (entry as { role?: unknown }).role !== 'string' ||
+      typeof (entry as { content?: unknown }).content !== 'string'
+    ) {
+      throw new Error(
+        `@copass/mcp: COPASS_CONTEXT_WINDOW_INITIAL_TURNS[${i}] must be {role: string, content: string}`,
+      );
+    }
+    const { role, content } = entry as { role: string; content: string };
+    if (role !== 'user' && role !== 'assistant' && role !== 'system') {
+      throw new Error(
+        `@copass/mcp: COPASS_CONTEXT_WINDOW_INITIAL_TURNS[${i}].role must be "user" | "assistant" | "system"; got "${role}"`,
+      );
+    }
+    turns.push({ role, content });
+  }
+  return turns;
 }

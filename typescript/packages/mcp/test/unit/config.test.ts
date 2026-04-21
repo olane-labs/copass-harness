@@ -47,4 +47,62 @@ describe('loadConfig', () => {
       }),
     ).toThrow(/COPASS_PRESET must be one of/);
   });
+
+  it('parses COPASS_CONTEXT_WINDOW_INITIAL_TURNS from JSON', () => {
+    const cfg = loadConfig({
+      COPASS_API_KEY: 'olk_test',
+      COPASS_SANDBOX_ID: 'sb1',
+      COPASS_CONTEXT_WINDOW_ID: 'ds_x',
+      COPASS_CONTEXT_WINDOW_INITIAL_TURNS: JSON.stringify([
+        { role: 'user', content: 'hello' },
+        { role: 'assistant', content: 'hi' },
+      ]),
+    });
+
+    expect(cfg.context_window_initial_turns).toEqual([
+      { role: 'user', content: 'hello' },
+      { role: 'assistant', content: 'hi' },
+    ]);
+  });
+
+  it('leaves initial turns undefined when env var is absent', () => {
+    const cfg = loadConfig({
+      COPASS_API_KEY: 'olk_test',
+      COPASS_SANDBOX_ID: 'sb1',
+    });
+
+    expect(cfg.context_window_initial_turns).toBeUndefined();
+  });
+
+  it('throws on malformed initial turns JSON', () => {
+    expect(() =>
+      loadConfig({
+        COPASS_API_KEY: 'olk_test',
+        COPASS_SANDBOX_ID: 'sb1',
+        COPASS_CONTEXT_WINDOW_INITIAL_TURNS: 'not json',
+      }),
+    ).toThrow(/not valid JSON/);
+  });
+
+  it('throws on initial turns with bad shape', () => {
+    expect(() =>
+      loadConfig({
+        COPASS_API_KEY: 'olk_test',
+        COPASS_SANDBOX_ID: 'sb1',
+        COPASS_CONTEXT_WINDOW_INITIAL_TURNS: JSON.stringify([{ role: 'user' }]),
+      }),
+    ).toThrow(/must be \{role: string, content: string\}/);
+  });
+
+  it('throws on unknown role in initial turns', () => {
+    expect(() =>
+      loadConfig({
+        COPASS_API_KEY: 'olk_test',
+        COPASS_SANDBOX_ID: 'sb1',
+        COPASS_CONTEXT_WINDOW_INITIAL_TURNS: JSON.stringify([
+          { role: 'robot', content: 'beep' },
+        ]),
+      }),
+    ).toThrow(/must be "user" \| "assistant" \| "system"/);
+  });
 });
