@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 import { cp, readFile, rename, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const USAGE = `Usage: npx create-copass-agent <project-name>
 
-Scaffolds a Hono + Vercel AI SDK + Claude agent pre-wired with
-@copass/core and @copass/ai-sdk. Edit the system prompt and deploy.`;
+Scaffolds a Hono + Claude Agent SDK + @copass/mcp agent with an embedded
+chat UI. If you've already run \`copass login\` and \`copass setup\`, the
+generated .env is auto-populated from your CLI config and nearby refs.json.`;
 
 function slugify(input: string): string {
   return input
@@ -16,6 +18,101 @@ function slugify(input: string): string {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .toLowerCase();
+}
+
+interface AutoPopulateResult {
+  found: {
+    apiKey: boolean;
+    sandboxId: boolean;
+    projectId: boolean;
+    apiUrl: boolean;
+  };
+}
+
+/**
+ * Best-effort populate `.env` from the Copass CLI's stored config.
+ * - `~/.olane/config.json` → `access_token` (as `COPASS_API_KEY`), `api_url`
+ * - nearest ancestor `.olane/refs.json` → `sandbox_id`, `project_id`
+ *
+ * `ANTHROPIC_API_KEY` is always left blank — the user must supply it.
+ * Missing values are left as placeholders so the file is always usable.
+ */
+async function autoPopulateEnv(dest: string): Promise<AutoPopulateResult> {
+  let apiKey: string | null = null;
+  let apiUrl: string | null = null;
+  let sandboxId: string | null = null;
+  let projectId: string | null = null;
+
+  const cliConfigPath = join(homedir(), '.olane', 'config.json');
+  if (existsSync(cliConfigPath)) {
+    try {
+      const raw = JSON.parse(await readFile(cliConfigPath, 'utf8'));
+      if (typeof raw?.access_token === 'string' && raw.access_token.length > 0) {
+        apiKey = raw.access_token;
+      }
+      if (typeof raw?.api_url === 'string' && raw.api_url.length > 0) {
+        apiUrl = raw.api_url;
+      }
+    } catch {
+      /* config unreadable — leave placeholders */
+    }
+  }
+
+  // Walk up from the scaffold dir looking for .olane/refs.json.
+  // `copass setup` writes refs into the project root where the dev ran it.
+  let cursor = dirname(dest);
+  const root = resolve('/');
+  while (cursor && cursor !== root) {
+    const refsPath = join(cursor, '.olane', 'refs.json');
+    if (existsSync(refsPath)) {
+      try {
+        const refs = JSON.parse(await readFile(refsPath, 'utf8'));
+        if (typeof refs?.sandbox_id === 'string') sandboxId = refs.sandbox_id;
+        if (typeof refs?.project_id === 'string') projectId = refs.project_id;
+      } catch {
+        /* continue walking */
+      }
+      if (sandboxId) break;
+    }
+    cursor = dirname(cursor);
+  }
+
+  const lines: string[] = [];
+  lines.push('# Copass — required');
+  lines.push(
+    apiKey
+      ? `COPASS_API_KEY=${apiKey}`
+      : 'COPASS_API_KEY=  # from ~/.olane/config.json (run `copass login`)',
+  );
+  lines.push(
+    sandboxId
+      ? `COPASS_SANDBOX_ID=${sandboxId}`
+      : 'COPASS_SANDBOX_ID=  # from .olane/refs.json (run `copass setup`)',
+  );
+  lines.push('');
+  lines.push('# Copass — optional');
+  if (apiUrl) lines.push(`COPASS_API_URL=${apiUrl}`);
+  else lines.push('# COPASS_API_URL=https://ai.copass.id');
+  if (projectId) lines.push(`COPASS_PROJECT_ID=${projectId}`);
+  else lines.push('# COPASS_PROJECT_ID=proj_...');
+  lines.push('');
+  lines.push('# Anthropic (Claude) — required for the agent loop');
+  lines.push('ANTHROPIC_API_KEY=  # from https://console.anthropic.com');
+  lines.push('');
+  lines.push('# Server');
+  lines.push('PORT=3000');
+  lines.push('');
+
+  await writeFile(join(dest, '.env'), lines.join('\n'));
+
+  return {
+    found: {
+      apiKey: Boolean(apiKey),
+      sandboxId: Boolean(sandboxId),
+      projectId: Boolean(projectId),
+      apiUrl: Boolean(apiUrl),
+    },
+  };
 }
 
 async function main(): Promise<void> {
@@ -39,7 +136,6 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Template sits alongside dist/ inside the published package.
   const here = fileURLToPath(new URL('.', import.meta.url));
   const templateDir = resolve(here, '..', 'template');
 
@@ -53,24 +149,36 @@ async function main(): Promise<void> {
   process.stdout.write(`Creating ${pkgName} in ${dest}...\n`);
   await cp(templateDir, dest, { recursive: true });
 
-  // npm strips leading-dot files from published packages, so the template uses
-  // `gitignore` — rename it back into place on copy.
   const gitignoreSrc = join(dest, 'gitignore');
   const gitignoreDst = join(dest, '.gitignore');
   if (existsSync(gitignoreSrc)) {
     await rename(gitignoreSrc, gitignoreDst);
   }
 
-  // Interpolate the user-supplied name into package.json.
   const pkgPath = join(dest, 'package.json');
   const pkgJson = await readFile(pkgPath, 'utf8');
   await writeFile(pkgPath, pkgJson.replace('PLACEHOLDER_NAME', pkgName));
 
-  process.stdout.write('\nDone. Next steps:\n');
+  const { found } = await autoPopulateEnv(dest);
+
+  const populated: string[] = [];
+  if (found.apiKey) populated.push('COPASS_API_KEY');
+  if (found.sandboxId) populated.push('COPASS_SANDBOX_ID');
+  if (found.projectId) populated.push('COPASS_PROJECT_ID');
+
+  process.stdout.write('\n');
+  if (populated.length > 0) {
+    process.stdout.write(`Auto-populated from the Copass CLI: ${populated.join(', ')}\n`);
+  } else {
+    process.stdout.write(
+      'No Copass CLI config found. Install the CLI and run `copass login && copass setup` to auto-populate your .env.\n',
+    );
+  }
+  process.stdout.write('\nNext steps:\n');
   process.stdout.write(`  cd ${nameArg}\n`);
-  process.stdout.write('  cp .env.example .env   # fill in your keys\n');
-  process.stdout.write('  pnpm install           # or npm install\n');
-  process.stdout.write('  pnpm dev               # start on :3000\n');
+  process.stdout.write('  # Open .env and add your ANTHROPIC_API_KEY (https://console.anthropic.com)\n');
+  process.stdout.write('  pnpm install     # or npm install\n');
+  process.stdout.write('  pnpm dev         # then open http://localhost:3000\n');
 }
 
 main().catch((err) => {

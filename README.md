@@ -1,65 +1,107 @@
 # copass-harness
 
-Open-source client SDK for the [Copass](https://copass.id) knowledge graph platform. Provides typed, multi-language libraries for authentication, encrypted ingestion, knowledge scoring, and natural language querying.
+**Developer SDKs and integrations for [Copass](https://copass.id).** A typed, multi-language monorepo for building agents grounded in a knowledge graph.
 
-## Language SDKs
+## Pick your path
 
-| Language | Package | Status |
-|----------|---------|--------|
-| TypeScript | [`@copass/harness`](./typescript/) | In development |
-| Python | [`copass-harness`](./python/) | Planned |
+**Building an agent with an LLM framework?** Use an adapter — the LLM picks between `discover` / `interpret` / `search` on each turn, and retrieval is window-aware automatically.
 
-## Quick Start (TypeScript)
+| Framework | Package |
+|---|---|
+| Vercel AI SDK | [`@copass/ai-sdk`](./typescript/packages/ai-sdk) |
+| LangChain / LangGraph | [`@copass/langchain`](./typescript/packages/langchain) |
+| Mastra | [`@copass/mastra`](./typescript/packages/mastra) |
+| Pydantic AI (Python) | [`copass-pydantic-ai`](./python/copass-pydantic-ai) |
+
+**On the Anthropic managed stack?** Use MCP — zero code, just a config line.
+
+| Client | Package |
+|---|---|
+| Claude Code · Claude Desktop · Cursor · Claude Agent SDK | [`@copass/mcp`](./typescript/packages/mcp) |
+
+**Starting from zero?** Scaffold a ready-to-deploy Hono server + Claude agent:
 
 ```bash
-npm install @copass/harness
+npx create-copass-agent my-app
 ```
 
-```typescript
-import { CopassClient } from '@copass/harness';
+See [`create-copass-agent`](./typescript/packages/create-copass-agent).
 
-const client = new CopassClient({
-  auth: { type: 'api-key', key: 'olk_your_api_key' },
-});
+**Going lower level?** Talk to the API directly:
 
-// Natural language search
-const result = await client.matrix.query({ query: 'How does authentication work?' });
+| Use case | Package |
+|---|---|
+| Retrieval, ingestion, Context Window, sandbox/source management | [`@copass/core`](./typescript/packages/core) |
+| Filesystem → knowledge graph watcher driver | [`@copass/datasource-fs`](./typescript/packages/datasource-fs) |
+| Olane OS instance management + address book | [`@copass/datasource-olane`](./typescript/packages/datasource-olane) |
 
-// Knowledge scoring
-const score = await client.cosync.score({ canonical_ids: ['entity-uuid'] });
+## Prerequisites (every path)
 
-// Ingestion — routes through the copass-id storage layer.
-// Auto-resolves the caller's primary sandbox + default project.
-const job = await client.ingest.text({
-  text: 'function hello() { return "world"; }',
-  source_type: 'code',
-});
-const status = await client.ingest.getJob(job.job_id);
+```bash
+npm install -g @copass/cli
+copass login       # email OTP
+copass setup       # creates a sandbox, writes .olane/refs.json
+```
+
+Credentials land in two files — every adapter reads them:
+
+| File | Contents |
+|---|---|
+| `~/.olane/config.json` | `access_token` (bearer), `api_url` |
+| `./.olane/refs.json` | `sandbox_id`, `project_id`, `data_source_id` |
+
+Ingest something so retrieval has material to work with:
+
+```bash
+copass ingest path/to/notes.md
+```
+
+## Core primitives
+
+- **Sandbox** — your tenancy boundary. Data, quotas, and encryption keys scope here.
+- **Data source** — a named connection feeding content in. Durable by default; `ephemeral` for time-bound streams like agent threads.
+- **Context Window** — an agent conversation wrapped as an ephemeral data source. Retrieval is automatically window-aware; the agent's memory isn't a prompt-engineering problem anymore.
+- **Retrieval gradient** — one axis, three calls: `discover` (ranked menu) → `interpret` (synthesized brief) → `search` (direct answer). Pick the point that matches your cost-quality tradeoff.
+
+## Repository layout
+
+```
+copass-harness/
+  typescript/packages/
+    core                  # Client SDK — auth, retrieval, Context Window, sources
+    ai-sdk                # Vercel AI SDK tool adapter
+    langchain             # LangChain tool adapter
+    mastra                # Mastra tool adapter
+    mcp                   # Standalone MCP server (npx @copass/mcp)
+    create-copass-agent   # npx scaffold for Hono + Claude agent
+    datasource-fs         # Filesystem watcher driver
+    datasource-olane      # Olane OS driver
+  python/
+    copass-pydantic-ai    # Pydantic AI tool adapter + minimal retrieval client
+  docs/                   # Architecture, auth, encryption, getting-started
+  spec/                   # Shared contracts (crypto constants, API specs)
+  examples/               # Per-language usage examples
 ```
 
 ## Documentation
 
-- [Architecture](./docs/architecture.md) -- SDK layered design
-- [API Surface](./docs/api-surface.md) -- Complete backend endpoint catalog
-- [Authentication](./docs/authentication.md) -- Auth flows (API key, JWT, Supabase OTP)
-- [Encryption](./docs/encryption.md) -- AES-256-GCM protocol and key derivation
-- [Getting Started](./docs/getting-started.md) -- Installation and first steps
+- [Architecture](./docs/architecture.md) — SDK layered design
+- [API Surface](./docs/api-surface.md) — Backend endpoint catalog
+- [Authentication](./docs/authentication.md) — API key, JWT, Supabase OTP
+- [Encryption](./docs/encryption.md) — AES-256-GCM protocol and key derivation
+- [Getting Started](./docs/getting-started.md) — Install and first retrieval
 
-## Repository Structure
+## Publishing
 
-```
-copass-harness/
-  docs/          Language-agnostic documentation
-  spec/          Shared contracts (crypto constants, API specs)
-  typescript/    TypeScript SDK
-  python/        Python SDK (planned)
-  examples/      Usage examples per language
-```
+- TypeScript packages — Lerna (`pnpm -w version`, `pnpm -w release`)
+- Python packages — Hatchling (`python -m build && twine upload`)
+
+See each package's `package.json` / `pyproject.toml` for version state.
 
 ## Contributing
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup and guidelines.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup.
 
 ## License
 
-MIT -- see [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE).

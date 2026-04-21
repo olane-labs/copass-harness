@@ -9,6 +9,12 @@ import { registerIngestTool } from './tools/ingest.js';
 export interface BuildServerOptions {
   client: CopassClient;
   config: ServerConfig;
+  /**
+   * Optional pre-populated window registry. Useful when a parent process has
+   * already created or attached to a Context Window and wants the server to
+   * start with it as the active window.
+   */
+  windows?: WindowRegistry;
 }
 
 /**
@@ -16,7 +22,7 @@ export interface BuildServerOptions {
  * a transport — see `startStdioServer` in `./bin.ts` for the default path,
  * or wire your own transport if embedding.
  */
-export function buildServer({ client, config }: BuildServerOptions): McpServer {
+export function buildServer({ client, config, windows }: BuildServerOptions): McpServer {
   const server = new McpServer(
     {
       name: 'copass',
@@ -27,8 +33,8 @@ export function buildServer({ client, config }: BuildServerOptions): McpServer {
     },
   );
 
-  const windows = new WindowRegistry();
-  const deps = { client, config, windows };
+  const registry = windows ?? new WindowRegistry();
+  const deps = { client, config, windows: registry };
 
   registerRetrievalTools(server, deps);
   registerContextWindowTools(server, deps);

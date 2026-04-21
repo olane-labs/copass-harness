@@ -95,6 +95,29 @@ All retrieval tools are **automatically window-aware** when a window has been cr
 | `COPASS_PROJECT_ID` | — | (none) |
 | `COPASS_PRESET` | — | `fast` |
 | `COPASS_INGEST_DATA_SOURCE_ID` | — | (none — required for `ingest` unless passed per call) |
+| `COPASS_CONTEXT_WINDOW_ID` | — | (none — if set, the server auto-attaches to this window on startup and makes it the active window) |
+
+### Pre-attaching a Context Window
+
+If a parent process (HTTP server, agent runtime, orchestrator) has already created a Context Window via `@copass/core` and is launching `@copass/mcp` as a subprocess, pass the window's `data_source_id` as `COPASS_CONTEXT_WINDOW_ID` so retrieval is window-aware from the first tool call — no need for the LLM to call `context_window_create` / `context_window_attach` itself.
+
+```json
+{
+  "mcpServers": {
+    "copass": {
+      "command": "npx",
+      "args": ["-y", "@copass/mcp"],
+      "env": {
+        "COPASS_API_KEY": "...",
+        "COPASS_SANDBOX_ID": "...",
+        "COPASS_CONTEXT_WINDOW_ID": "ds_xxx"
+      }
+    }
+  }
+}
+```
+
+The `create-copass-agent` scaffold uses exactly this pattern — the HTTP layer owns window lifecycle and passes the id down to each spawned agent session.
 
 ## Programmatic use
 

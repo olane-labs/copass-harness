@@ -8,6 +8,13 @@ export interface ServerConfig {
   preset: SearchPreset;
   /** Default data_source_id for `ingest` when the caller doesn't pass one. */
   ingest_data_source_id?: string;
+  /**
+   * If set, the server attaches to this Context Window on startup and makes
+   * it the active window. Use when another process (e.g. a Hono server)
+   * already created the window and you're launching the MCP server as a
+   * subprocess that should share it.
+   */
+  context_window_id?: string;
 }
 
 const VALID_PRESETS: readonly SearchPreset[] = ['fast', 'auto', 'max'] as const;
@@ -50,6 +57,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   }
 
   const ingest_data_source_id = env.COPASS_INGEST_DATA_SOURCE_ID?.trim() || undefined;
+  const context_window_id = env.COPASS_CONTEXT_WINDOW_ID?.trim() || undefined;
 
   return {
     api_url,
@@ -58,5 +66,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     project_id,
     preset: rawPreset as SearchPreset,
     ingest_data_source_id,
+    context_window_id,
   };
 }

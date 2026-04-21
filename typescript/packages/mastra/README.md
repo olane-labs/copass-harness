@@ -36,7 +36,7 @@ npm install @copass/mastra @copass/core @mastra/core @ai-sdk/anthropic zod
 
 ```ts
 import { CopassClient } from '@copass/core';
-import { copassTools } from '@copass/mastra';
+import { copassTools, createWindowTracker } from '@copass/mastra';
 import { Agent } from '@mastra/core/agent';
 import { anthropic } from '@ai-sdk/anthropic';
 
@@ -45,6 +45,7 @@ const copass = new CopassClient({
 });
 const sandbox_id = process.env.COPASS_SANDBOX_ID!;
 const window = await copass.contextWindow.create({ sandbox_id });
+const tracker = createWindowTracker({ window });
 const tools = copassTools({ client: copass, sandbox_id, window });
 
 const agent = new Agent({
@@ -54,16 +55,30 @@ const agent = new Agent({
   tools,
 });
 
-const response = await agent.generate('what do we know about checkout retry behavior?');
+const userMessage = 'what do we know about checkout retry behavior?';
+await tracker.recordUserTurn(userMessage);
+
+const response = await agent.generate(userMessage, {
+  onStepFinish: tracker.onStepFinish,
+  maxSteps: 5,
+});
 console.log(response.text);
 ```
 
-If it worked, the answer cites concepts from whatever you ingested. Run it twice with the same `window` — the second call won't re-surface items the agent already used.
+If it worked, the answer cites concepts from whatever you ingested. Keep the same `window` and `tracker` across turns — follow-up calls won't re-surface items the agent already used.
+
+## Window auto-tracking
+
+Mastra's `agent.generate()` / `agent.stream()` fire `onStepFinish` after each internal step with `response.messages` — the assistant and tool messages generated during that step. `createWindowTracker(...)` returns a handler that mirrors those into the `ContextWindow`, de-duplicated against what's already there.
+
+The user's initial message isn't in `onStepFinish` (it's the input going *into* the call), so capture it explicitly with `tracker.recordUserTurn(text)` before `agent.generate()`. Safe to call repeatedly — the tracker de-duplicates.
+
+Tool results (`role: 'tool'`) are skipped by default; opt in with `createWindowTracker({ window, includeToolMessages: true })` if you want them tracked.
 
 ## Why this, not the raw API
 
 - **LLM chooses the retrieval shape.** Three tools; the model picks the right one per turn.
-- **Window-aware automatically.** Pass a `ContextWindow` once; every retrieval call respects turn history.
+- **Window-aware automatically** — when paired with `createWindowTracker`. Without the tracker, retrieval sees an empty history.
 - **Mastra-native tool shape.** Drop the returned `{ discover, interpret, search }` object straight into any agent config.
 
 ## Tools

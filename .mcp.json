@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "copass": {
+      "type": "stdio",
+      "command": "copass",
+      "args": [
+        "mcp"
+      ]
+    }
+  }
+}

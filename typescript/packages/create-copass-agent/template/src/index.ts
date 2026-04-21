@@ -3,7 +3,17 @@ import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { chat } from './agent.js';
-import { getWindow } from './copass.js';
+import { CHAT_UI } from './chat-ui.js';
+import { createThread } from './copass.js';
+
+/**
+ * In-memory map: Copass `dataSourceId` (the Context Window id) → Agent SDK
+ * `sessionId`. The client sees the `dataSourceId` as `threadId`; we look up
+ * the matching `sessionId` to resume the agent's chat history.
+ *
+ * Scaffold only — persist this in Redis / your DB / a file in production.
+ */
+const threadSessions = new Map<string, string>();
 
 const ChatRequest = z.object({
   message: z.string().min(1),
@@ -12,9 +22,7 @@ const ChatRequest = z.object({
 
 const app = new Hono();
 
-app.get('/', (c) =>
-  c.text('copass-agent: POST /chat with { message: string, threadId?: string }'),
-);
+app.get('/', (c) => c.html(CHAT_UI));
 
 app.post('/chat', async (c) => {
   let body: z.infer<typeof ChatRequest>;
@@ -25,12 +33,25 @@ app.post('/chat', async (c) => {
   }
 
   try {
-    const window = await getWindow(body.threadId);
-    const answer = await chat({ message: body.message, window });
-    return c.json({
-      threadId: window.dataSourceId,
-      answer,
+    let threadId = body.threadId;
+    let resumeSessionId: string | undefined;
+
+    if (!threadId) {
+      const thread = await createThread();
+      threadId = thread.dataSourceId;
+    } else {
+      resumeSessionId = threadSessions.get(threadId);
+    }
+
+    const { answer, sessionId } = await chat({
+      message: body.message,
+      dataSourceId: threadId,
+      resumeSessionId,
     });
+
+    if (sessionId) threadSessions.set(threadId, sessionId);
+
+    return c.json({ threadId, answer });
   } catch (err) {
     console.error(err);
     return c.json(

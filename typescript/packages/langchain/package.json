@@ -57,11 +57,16 @@
   "peerDependencies": {
     "@copass/core": "^0.2.0",
     "@langchain/core": ">=0.3.0",
+    "@langchain/langgraph": ">=0.2.0",
     "zod": "^3.23.0"
+  },
+  "peerDependenciesMeta": {
+    "@langchain/langgraph": { "optional": true }
   },
   "devDependencies": {
     "@copass/core": "workspace:*",
     "@langchain/core": "^0.3.0",
+    "@langchain/langgraph": "^0.2.0",
     "@types/node": "^20.17.0",
     "tsup": "^8.3.0",
     "vitest": "^2.1.0",
