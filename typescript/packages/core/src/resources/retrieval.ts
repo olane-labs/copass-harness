@@ -6,11 +6,14 @@
  * - `interpret(sandboxId, …)` → 1–2 paragraph brief for one candidate.
  * - `search(sandboxId, …)`    → deep matrix retrieval with a synthesized answer.
  *
- * All three accept `{ query, history }` where `history` is the caller-supplied
- * recent chat turns. Server caps at 20 turns.
+ * All three accept either a `window` (a {@link WindowLike} — typically a
+ * {@link ContextWindow} from `client.contextWindow.create()`) or a raw
+ * `history` array of recent chat turns. When both are set `window` wins.
+ * Server caps at 20 turns.
  */
 
 import { BaseResource } from './base.js';
+import type { WindowLike } from '../context-window/types.js';
 
 export type ChatRole = 'user' | 'assistant' | 'system';
 
@@ -33,6 +36,13 @@ export interface DiscoveryItem {
 
 export interface DiscoverRequest {
   query: string;
+  /**
+   * Preferred: a {@link WindowLike} (e.g. a {@link ContextWindow}). The
+   * resource reads turns via `window.getTurns()` at call time and passes
+   * them to the server as `history`.
+   */
+  window?: WindowLike;
+  /** Raw chat turns. Used only when `window` is not supplied. */
   history?: ChatMessage[];
   project_id?: string;
   reference_date?: string;
@@ -58,9 +68,13 @@ export interface InterpretRequest {
    * to include.
    */
   items: string[][];
+  /** Preferred: a {@link WindowLike}. Wins over `history` when both set. */
+  window?: WindowLike;
+  /** Raw chat turns. Used only when `window` is not supplied. */
   history?: ChatMessage[];
   project_id?: string;
   reference_date?: string;
+  preset?: SearchPreset;
 }
 
 export interface InterpretCitation {
@@ -83,6 +97,9 @@ export type SearchPreset = 'fast' | 'auto' | 'discover' | 'max';
 
 export interface SearchRequest {
   query: string;
+  /** Preferred: a {@link WindowLike}. Wins over `history` when both set. */
+  window?: WindowLike;
+  /** Raw chat turns. Used only when `window` is not supplied. */
   history?: ChatMessage[];
   project_id?: string;
   reference_date?: string;
@@ -101,25 +118,38 @@ export interface SearchResponse {
   query: string;
 }
 
+/**
+ * Extract `history` from a request: `window.getTurns()` takes precedence,
+ * then the explicit `history` array, then an empty array. Strips `window`
+ * from the body so it doesn't get serialized.
+ */
+function resolveBody<T extends { window?: WindowLike; history?: ChatMessage[] }>(
+  request: T,
+): Omit<T, 'window'> & { history: ChatMessage[] } {
+  const { window, history, ...rest } = request;
+  const resolved = window ? window.getTurns() : history ?? [];
+  return { ...rest, history: resolved } as Omit<T, 'window'> & { history: ChatMessage[] };
+}
+
 export class RetrievalResource extends BaseResource {
   discover(sandboxId: string, request: DiscoverRequest): Promise<DiscoverResponse> {
     return this.post<DiscoverResponse>(
       `/api/v1/query/sandboxes/${encodeURIComponent(sandboxId)}/discover`,
-      { history: [], ...request },
+      resolveBody(request),
     );
   }
 
   interpret(sandboxId: string, request: InterpretRequest): Promise<InterpretResponse> {
     return this.post<InterpretResponse>(
       `/api/v1/query/sandboxes/${encodeURIComponent(sandboxId)}/interpret`,
-      { history: [], ...request },
+      resolveBody(request),
     );
   }
 
   search(sandboxId: string, request: SearchRequest): Promise<SearchResponse> {
     return this.post<SearchResponse>(
       `/api/v1/query/sandboxes/${encodeURIComponent(sandboxId)}/search`,
-      { history: [], ...request },
+      resolveBody(request),
     );
   }
 }

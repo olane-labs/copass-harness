@@ -33,6 +33,15 @@ export type {
   EnsureDataSourceOptions,
 } from './data-sources/index.js';
 
+// Context window
+export { ContextWindow, ContextWindowResource } from './context-window/index.js';
+export type {
+  ContextWindowOptions,
+  CreateContextWindowOptions,
+  AttachContextWindowOptions,
+  WindowLike,
+} from './context-window/index.js';
+
 // Resources
 export { BaseResource } from './resources/base.js';
 export { SandboxesResource } from './resources/sandboxes.js';

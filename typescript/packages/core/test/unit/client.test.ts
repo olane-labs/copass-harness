@@ -17,6 +17,7 @@ describe('CopassClient', () => {
     expect(client.users).toBeDefined();
     expect(client.apiKeys).toBeDefined();
     expect(client.usage).toBeDefined();
+    expect(client.contextWindow).toBeDefined();
   });
 
   it('instantiates with bearer auth', () => {

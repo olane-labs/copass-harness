@@ -56,9 +56,9 @@
   },
   "dependencies": {
     "@olane/o-client": "^0.8.19",
-    "@olane/o-core": "^0.8.17",
-    "@olane/o-node": "^0.8.17",
-    "@olane/os": "^0.8.17",
+    "@olane/o-core": "^0.8.18",
+    "@olane/o-node": "^0.8.18",
+    "@olane/os": "^0.8.18",
     "fs-extra": "^11.3.3",
     "portfinder": "^1.0.38"
   },

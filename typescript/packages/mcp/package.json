@@ -1,7 +1,7 @@
 {
-  "name": "@copass/core",
-  "version": "0.2.0",
-  "description": "Core client SDK for the Copass platform",
+  "name": "@copass/mcp",
+  "version": "0.1.0",
+  "description": "Standalone MCP server for Copass — drop-in discover/interpret/search + Context Window tools for any MCP client (Claude Agent SDK, Claude Code, Claude Desktop, Cursor)",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -10,6 +10,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "copass-mcp": "./dist/bin.js"
+  },
   "exports": {
     ".": {
       "import": {
@@ -39,27 +42,34 @@
   "keywords": [
     "copass",
     "knowledge-graph",
-    "sdk",
-    "client",
-    "olane"
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "claude-code",
+    "agent",
+    "rag"
   ],
   "author": "Olane Inc.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/olane-labs/copass-harness.git",
-    "directory": "typescript/packages/core"
+    "directory": "typescript/packages/mcp"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "zod": "^3.24.0"
   },
+  "peerDependencies": {
+    "@copass/core": "^0.2.0"
+  },
   "devDependencies": {
+    "@copass/core": "workspace:*",
     "@types/node": "^20.17.0",
     "tsup": "^8.3.0",
     "vitest": "^2.1.0"
-  },
-  "gitHead": "d6cea7c1602f4cefe303762f1f5fee7365583933"
+  }
 }

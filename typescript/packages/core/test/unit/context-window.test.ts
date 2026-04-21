@@ -1,0 +1,165 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ContextWindow } from '../../src/context-window/context-window.js';
+import { ContextWindowResource } from '../../src/context-window/resource.js';
+import type { CopassClient } from '../../src/client.js';
+import type { DataSource } from '../../src/types/sources.js';
+import type { IngestJobResponse } from '../../src/types/ingest.js';
+import type { StatusResponse } from '../../src/types/sandboxes.js';
+
+function makeClient(overrides: Record<string, unknown> = {}): CopassClient {
+  return {
+    sources: {
+      register: vi.fn(),
+      retrieve: vi.fn(),
+      ingest: vi.fn().mockResolvedValue({
+        job_id: 'job_1',
+        status: 'queued',
+        encrypted: false,
+        sandbox_id: 'sb1',
+        status_url: '/jobs/job_1',
+      } satisfies IngestJobResponse),
+      pause: vi.fn(),
+      resume: vi.fn(),
+      disconnect: vi.fn().mockResolvedValue({ status: 'disconnected' } satisfies StatusResponse),
+      ...(overrides.sources ?? {}),
+    },
+    ingest: { getSandboxJob: vi.fn() },
+  } as unknown as CopassClient;
+}
+
+describe('ContextWindow', () => {
+  let client: CopassClient;
+
+  beforeEach(() => {
+    client = makeClient();
+  });
+
+  it('getTurns returns a defensive copy', () => {
+    const window = new ContextWindow({
+      client,
+      sandboxId: 'sb1',
+      dataSourceId: 'ds1',
+      initialTurns: [{ role: 'user', content: 'hello' }],
+    });
+    const turns = window.getTurns();
+    turns.push({ role: 'user', content: 'injected' });
+    expect(window.getTurns()).toHaveLength(1);
+  });
+
+  it('addTurn appends locally and pushes through the source', async () => {
+    const window = new ContextWindow({
+      client,
+      sandboxId: 'sb1',
+      dataSourceId: 'ds1',
+    });
+    await window.addTurn({ role: 'user', content: 'hello' });
+    expect(window.getTurns()).toEqual([{ role: 'user', content: 'hello' }]);
+    expect(client.sources.ingest).toHaveBeenCalledWith(
+      'sb1',
+      'ds1',
+      expect.objectContaining({
+        text: 'user: hello',
+        source_type: 'conversation',
+      }),
+    );
+  });
+
+  it('addTurn forwards projectId when the window was created with one', async () => {
+    const window = new ContextWindow({
+      client,
+      sandboxId: 'sb1',
+      dataSourceId: 'ds1',
+      projectId: 'proj_42',
+    });
+    await window.addTurn({ role: 'assistant', content: 'hi' });
+    expect(client.sources.ingest).toHaveBeenCalledWith(
+      'sb1',
+      'ds1',
+      expect.objectContaining({ project_id: 'proj_42' }),
+    );
+  });
+
+  it('close disconnects the underlying source', async () => {
+    const window = new ContextWindow({ client, sandboxId: 'sb1', dataSourceId: 'ds1' });
+    await window.close();
+    expect(client.sources.disconnect).toHaveBeenCalledWith('sb1', 'ds1');
+  });
+
+  it('seeds initialTurns on construction', () => {
+    const window = new ContextWindow({
+      client,
+      sandboxId: 'sb1',
+      dataSourceId: 'ds1',
+      initialTurns: [
+        { role: 'user', content: 'q1' },
+        { role: 'assistant', content: 'a1' },
+      ],
+    });
+    expect(window.getTurns()).toHaveLength(2);
+  });
+});
+
+describe('ContextWindowResource', () => {
+  const mockSource: DataSource = {
+    data_source_id: 'ds_new',
+    user_id: 'u1',
+    sandbox_id: 'sb1',
+    provider: 'custom',
+    name: 'window-123',
+    ingestion_mode: 'manual',
+    status: 'active',
+    kind: 'ephemeral',
+    adapter_config: {},
+  };
+
+  it('create() registers an ephemeral custom source and returns a window bound to it', async () => {
+    const register = vi.fn().mockResolvedValue(mockSource);
+    const client = makeClient({ sources: { register } });
+
+    const resource = new ContextWindowResource(client);
+    const window = await resource.create({ sandbox_id: 'sb1', project_id: 'proj_1' });
+
+    expect(window).toBeInstanceOf(ContextWindow);
+    expect(window.dataSourceId).toBe('ds_new');
+    expect(window.projectId).toBe('proj_1');
+    expect(register).toHaveBeenCalledWith(
+      'sb1',
+      expect.objectContaining({
+        provider: 'custom',
+        ingestion_mode: 'manual',
+        kind: 'ephemeral',
+      }),
+    );
+  });
+
+  it('create() generates a default window-<ts> name when none is provided', async () => {
+    const register = vi.fn().mockResolvedValue(mockSource);
+    const client = makeClient({ sources: { register } });
+
+    const resource = new ContextWindowResource(client);
+    await resource.create({ sandbox_id: 'sb1' });
+
+    const passedName = register.mock.calls[0][1].name as string;
+    expect(passedName).toMatch(/^window-\d+$/);
+  });
+
+  it('attach() retrieves the existing source and seeds initialTurns', async () => {
+    const existing: DataSource = { ...mockSource, data_source_id: 'ds_existing' };
+    const retrieve = vi.fn().mockResolvedValue(existing);
+    const client = makeClient({ sources: { retrieve } });
+
+    const resource = new ContextWindowResource(client);
+    const window = await resource.attach({
+      sandbox_id: 'sb1',
+      data_source_id: 'ds_existing',
+      initialTurns: [
+        { role: 'user', content: 'earlier question' },
+        { role: 'assistant', content: 'earlier answer' },
+      ],
+    });
+
+    expect(retrieve).toHaveBeenCalledWith('sb1', 'ds_existing');
+    expect(window.dataSourceId).toBe('ds_existing');
+    expect(window.getTurns()).toHaveLength(2);
+  });
+});

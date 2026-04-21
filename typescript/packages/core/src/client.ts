@@ -15,6 +15,7 @@ import { SandboxesResource } from './resources/sandboxes.js';
 import { SourcesResource } from './resources/sources.js';
 import { VaultResource } from './resources/vault.js';
 import { IngestResource } from './resources/ingest.js';
+import { ContextWindowResource } from './context-window/index.js';
 import type { RequestMiddleware, ResponseMiddleware } from './http/http-client.js';
 import type { RetryConfig } from './types/common.js';
 
@@ -76,6 +77,7 @@ export class CopassClient {
   readonly users: UsersResource;
   readonly apiKeys: ApiKeysResource;
   readonly usage: UsageResource;
+  readonly contextWindow: ContextWindowResource;
 
   constructor(options: CopassClientOptions) {
     const authProvider = createAuthProvider(options.auth, options.encryptionKey);
@@ -98,6 +100,8 @@ export class CopassClient {
     this.users = new UsersResource(http);
     this.apiKeys = new ApiKeysResource(http);
     this.usage = new UsageResource(http);
+    // Depends on `this.sources` for register/retrieve — initialize last.
+    this.contextWindow = new ContextWindowResource(this);
   }
 }
 

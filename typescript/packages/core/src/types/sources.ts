@@ -14,7 +14,18 @@ export type DataSourceStatus =
   | 'paused'
   | 'disconnected'
   | 'error'
+  | 'archived'
   | string;
+
+/**
+ * Lifecycle category for a data source.
+ *
+ * - `durable` (default) — lives until explicitly deleted.
+ * - `ephemeral` — auto-archived after a period of inactivity. Data (chunks
+ *   + graph events) is preserved on archive; only the source record flips
+ *   to inactive. Used by the SDK's Context Window primitive.
+ */
+export type DataSourceKind = 'durable' | 'ephemeral';
 
 export interface DataSource {
   data_source_id: string;
@@ -24,6 +35,7 @@ export interface DataSource {
   name: string;
   ingestion_mode: DataSourceIngestionMode;
   status: DataSourceStatus;
+  kind?: DataSourceKind;
   external_account_id?: string;
   adapter_config: Record<string, unknown>;
   poll_interval_seconds?: number;
@@ -36,6 +48,11 @@ export interface CreateDataSourceRequest {
   provider: DataSourceProvider;
   name: string;
   ingestion_mode?: DataSourceIngestionMode;
+  /**
+   * Lifecycle category. Defaults to `durable` when omitted. Set to
+   * `ephemeral` for time-bound sources like agent conversation threads.
+   */
+  kind?: DataSourceKind;
   external_account_id?: string;
   adapter_config?: Record<string, unknown>;
   /** Minimum 60 seconds enforced server-side. Only meaningful for `polling` mode. */

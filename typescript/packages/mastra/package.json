@@ -1,7 +1,7 @@
 {
-  "name": "@copass/core",
-  "version": "0.2.0",
-  "description": "Core client SDK for the Copass platform",
+  "name": "@copass/mastra",
+  "version": "0.1.0",
+  "description": "Mastra tool adapters for Copass — drop-in discover/interpret/search tools for Mastra agents",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -39,27 +39,32 @@
   "keywords": [
     "copass",
     "knowledge-graph",
-    "sdk",
-    "client",
-    "olane"
+    "mastra",
+    "agent",
+    "tools",
+    "rag"
   ],
   "author": "Olane Inc.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/olane-labs/copass-harness.git",
-    "directory": "typescript/packages/core"
+    "directory": "typescript/packages/mastra"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "dependencies": {
-    "zod": "^3.24.0"
+  "peerDependencies": {
+    "@copass/core": "^0.2.0",
+    "@mastra/core": ">=0.10.0",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@copass/core": "workspace:*",
+    "@mastra/core": "^0.10.0",
     "@types/node": "^20.17.0",
     "tsup": "^8.3.0",
-    "vitest": "^2.1.0"
-  },
-  "gitHead": "d6cea7c1602f4cefe303762f1f5fee7365583933"
+    "vitest": "^2.1.0",
+    "zod": "^3.24.0"
+  }
 }

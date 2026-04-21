@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "copass-pydantic-ai"
+version = "0.1.0"
+description = "Pydantic AI tool adapters for Copass — drop-in discover/interpret/search tools for Pydantic AI agents"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Olane Inc." }]
+requires-python = ">=3.10"
+keywords = [
+    "copass",
+    "knowledge-graph",
+    "pydantic-ai",
+    "agent",
+    "tools",
+    "rag",
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+pydantic-ai = ["pydantic-ai>=0.0.20"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "respx>=0.21",
+    "mypy>=1.10",
+    "ruff>=0.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/olane-labs/copass-harness"
+Repository = "https://github.com/olane-labs/copass-harness.git"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/copass_pydantic_ai"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+packages = ["copass_pydantic_ai"]
