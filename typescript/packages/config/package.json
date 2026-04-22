@@ -1,18 +1,30 @@
 {
-  "name": "create-copass-agent",
+  "name": "@copass/config",
   "version": "0.2.0",
-  "description": "Scaffold a Copass-backed agent: Hono + Vercel AI SDK + Claude + Context Window, ready to edit and deploy.",
+  "description": "Canonical tool descriptions, parameter descriptions, and system prompts shared across every @copass/* adapter. Single source of truth for LLM-facing copy.",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "type": "module",
-  "bin": {
-    "create-copass-agent": "./dist/cli.js"
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
   },
   "files": [
     "dist/**/*",
-    "template/**/*",
+    "README.md",
     "LICENSE"
   ],
   "scripts": {
@@ -21,24 +33,22 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "copass",
-    "create",
-    "starter",
-    "agent",
-    "scaffold",
-    "hono",
-    "vercel-ai-sdk",
-    "claude"
+    "config",
+    "tool-descriptions",
+    "system-prompts",
+    "llm"
   ],
   "author": "Olane Inc.",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/olane-labs/copass-harness.git",
-    "directory": "typescript/packages/create-copass-agent"
+    "directory": "typescript/packages/config"
   },
   "engines": {
     "node": ">=18.0.0"

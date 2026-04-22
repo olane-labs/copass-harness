@@ -1,5 +1,14 @@
 import { tool } from 'ai';
 import { z } from 'zod';
+import {
+  DISCOVER_DESCRIPTION,
+  DISCOVER_QUERY_PARAM,
+  INTERPRET_DESCRIPTION,
+  INTERPRET_ITEMS_PARAM,
+  INTERPRET_QUERY_PARAM,
+  SEARCH_DESCRIPTION,
+  SEARCH_QUERY_PARAM,
+} from '@copass/config';
 import type { CopassClient, SearchPreset, WindowLike } from '@copass/core';
 
 export interface CopassToolsOptions {
@@ -50,13 +59,9 @@ export function copassTools(options: CopassToolsOptions) {
 
   return {
     discover: tool({
-      description:
-        'Return a ranked menu of context items relevant to a query. Each item is a ' +
-        'pointer (canonical_ids + short summary), not prose. Cheap and fast — use it ' +
-        'FIRST to see what the knowledge graph has before committing to a heavier call. ' +
-        'Pass an item\'s canonical_ids tuple to `interpret` to drill in.',
+      description: DISCOVER_DESCRIPTION,
       parameters: z.object({
-        query: z.string().describe('Natural-language query to surface relevant context for.'),
+        query: z.string().describe(DISCOVER_QUERY_PARAM),
       }),
       execute: async ({ query }) => {
         const response = await client.retrieval.discover(sandbox_id, {
@@ -77,19 +82,10 @@ export function copassTools(options: CopassToolsOptions) {
     }),
 
     interpret: tool({
-      description:
-        'Return a 1–2 paragraph synthesized brief pinned to specific items picked from ' +
-        '`discover`. Pass one or more `canonical_ids` tuples (one per item you want to ' +
-        'include). Use this AFTER `discover` when you know which items matter.',
+      description: INTERPRET_DESCRIPTION,
       parameters: z.object({
-        query: z.string().describe('The question the brief should answer.'),
-        items: z
-          .array(z.array(z.string()))
-          .min(1)
-          .describe(
-            'List of canonical_ids tuples — each tuple is the `canonical_ids` field ' +
-              'from one discover item. Pass several to synthesize across items.',
-          ),
+        query: z.string().describe(INTERPRET_QUERY_PARAM),
+        items: z.array(z.array(z.string())).min(1).describe(INTERPRET_ITEMS_PARAM),
       }),
       execute: async ({ query, items }) => {
         const response = await client.retrieval.interpret(sandbox_id, {
@@ -104,12 +100,9 @@ export function copassTools(options: CopassToolsOptions) {
     }),
 
     search: tool({
-      description:
-        'Return a full synthesized natural-language answer in one call. Use for ' +
-        'self-contained questions that do NOT benefit from a staged discover→interpret flow. ' +
-        'Heaviest of the three tools.',
+      description: SEARCH_DESCRIPTION,
       parameters: z.object({
-        query: z.string().describe('The question to answer.'),
+        query: z.string().describe(SEARCH_QUERY_PARAM),
       }),
       execute: async ({ query }) => {
         const response = await client.retrieval.search(sandbox_id, {

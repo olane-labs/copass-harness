@@ -2,14 +2,21 @@
 
 ``copass_tools(...)`` returns a tuple of three async callables — drop them
 straight into ``Agent(tools=[...])``. Each function has a type-hinted
-signature and a docstring, which Pydantic AI uses to generate the tool
-schema + description automatically.
+signature; its ``__doc__`` is set from the canonical descriptions in
+``_strings`` (which mirrors the ``@copass/config`` TypeScript package), so
+the schema + description Pydantic AI generates matches what every other
+adapter in the copass-harness surfaces.
 """
 
 from __future__ import annotations
 
 from typing import Any, Callable, Optional
 
+from ._strings import (
+    DISCOVER_DESCRIPTION,
+    INTERPRET_DESCRIPTION,
+    SEARCH_DESCRIPTION,
+)
 from .client import CopassRetrievalClient
 from .types import SearchPreset, WindowLike
 
@@ -52,13 +59,6 @@ def copass_tools(
     """
 
     async def discover(query: str) -> dict[str, Any]:
-        """Return a ranked menu of context items relevant to a query.
-
-        Each item is a pointer (canonical_ids + short summary), not prose.
-        Cheap and fast — use it FIRST to see what the knowledge graph has
-        before committing to a heavier call. Pass an item's canonical_ids
-        tuple to `interpret` to drill in.
-        """
         response = await client.discover(
             sandbox_id, query=query, project_id=project_id, window=window
         )
@@ -76,12 +76,6 @@ def copass_tools(
         }
 
     async def interpret(query: str, items: list[list[str]]) -> dict[str, Any]:
-        """Return a 1-2 paragraph synthesized brief pinned to specific items.
-
-        Pass one or more canonical_ids tuples (one per item you want to
-        include, taken from `discover` results). Use this AFTER `discover`
-        when you know which items matter.
-        """
         response = await client.interpret(
             sandbox_id,
             query=query,
@@ -93,11 +87,6 @@ def copass_tools(
         return {"brief": response.get("brief")}
 
     async def search(query: str) -> dict[str, Any]:
-        """Return a full synthesized natural-language answer in one call.
-
-        Use for self-contained questions that do NOT benefit from a staged
-        discover-to-interpret flow. Heaviest of the three tools.
-        """
         response = await client.search(
             sandbox_id,
             query=query,
@@ -106,5 +95,13 @@ def copass_tools(
             preset=preset,
         )
         return {"answer": response.get("answer")}
+
+    # Pydantic AI reads each tool's description from `fn.__doc__` at agent
+    # construction. Setting it here (rather than inlining as source-level
+    # docstrings) pins the LLM-facing copy to the shared `_strings` module
+    # so the Python package can never drift from @copass/config.
+    discover.__doc__ = DISCOVER_DESCRIPTION
+    interpret.__doc__ = INTERPRET_DESCRIPTION
+    search.__doc__ = SEARCH_DESCRIPTION
 
     return discover, interpret, search

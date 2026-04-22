@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "copass-pydantic-ai"
-version = "0.1.0"
+version = "0.2.0"
 description = "Pydantic AI tool adapters for Copass — drop-in discover/interpret/search tools for Pydantic AI agents"
 readme = "README.md"
 license = { text = "MIT" }

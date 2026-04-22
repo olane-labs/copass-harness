@@ -1,6 +1,6 @@
 {
   "name": "@copass/datasource-fs",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Filesystem data source driver for Copass — scans, watches, and pushes file events through the copass-id storage layer",
   "publishConfig": {
     "access": "public",
@@ -58,10 +58,10 @@
     "ignore": "^7.0.0"
   },
   "peerDependencies": {
-    "@copass/core": "^0.1.0"
+    "@copass/core": "^0.2.0"
   },
   "devDependencies": {
-    "@copass/core": "0.1.1",
+    "@copass/core": "workspace:*",
     "@types/node": "^20.17.0",
     "tsup": "^8.3.0",
     "vitest": "^2.1.0"

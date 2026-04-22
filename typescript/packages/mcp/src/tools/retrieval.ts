@@ -1,4 +1,15 @@
 import { z } from 'zod';
+import {
+  DISCOVER_QUERY_PARAM,
+  INTERPRET_DESCRIPTION,
+  INTERPRET_ITEMS_PARAM,
+  INTERPRET_QUERY_PARAM,
+  MCP_DISCOVER_DESCRIPTION,
+  PRESET_PARAM,
+  PROJECT_ID_PARAM,
+  SEARCH_DESCRIPTION,
+  SEARCH_QUERY_PARAM,
+} from '@copass/config';
 import type { CopassClient } from '@copass/core';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ServerConfig } from '../config.js';
@@ -30,15 +41,10 @@ export function registerRetrievalTools(server: McpServer, deps: RetrievalDeps): 
   server.registerTool(
     'discover',
     {
-      description:
-        'Return a ranked menu of context items relevant to a query. Each item is a ' +
-        'pointer (canonical_ids + short summary), not prose. Cheap and fast — use it ' +
-        'FIRST to see what the knowledge graph has before committing to a heavier call. ' +
-        "Pass an item's canonical_ids tuple to `interpret` to drill in. Automatically " +
-        'window-aware when a Context Window is active (see `context_window_create`).',
+      description: MCP_DISCOVER_DESCRIPTION,
       inputSchema: {
-        query: z.string().describe('Natural-language query to surface relevant context for.'),
-        project_id: z.string().optional().describe('Override the server default project_id.'),
+        query: z.string().describe(DISCOVER_QUERY_PARAM),
+        project_id: z.string().optional().describe(PROJECT_ID_PARAM),
       },
     },
     async ({ query, project_id }) => {
@@ -66,24 +72,12 @@ export function registerRetrievalTools(server: McpServer, deps: RetrievalDeps): 
   server.registerTool(
     'interpret',
     {
-      description:
-        'Return a 1–2 paragraph synthesized brief pinned to specific items picked from ' +
-        '`discover`. Pass one or more canonical_ids tuples (one per item you want to ' +
-        'include). Use this AFTER `discover` when you know which items matter.',
+      description: INTERPRET_DESCRIPTION,
       inputSchema: {
-        query: z.string().describe('The question the brief should answer.'),
-        items: z
-          .array(z.array(z.string()).min(1))
-          .min(1)
-          .describe(
-            'List of canonical_ids tuples — each tuple is the `canonical_ids` field ' +
-              'from one discover item. Pass several to synthesize across items.',
-          ),
-        preset: z
-          .enum(['fast', 'auto', 'max'])
-          .optional()
-          .describe('Override the server default preset.'),
-        project_id: z.string().optional().describe('Override the server default project_id.'),
+        query: z.string().describe(INTERPRET_QUERY_PARAM),
+        items: z.array(z.array(z.string()).min(1)).min(1).describe(INTERPRET_ITEMS_PARAM),
+        preset: z.enum(['fast', 'auto', 'max']).optional().describe(PRESET_PARAM),
+        project_id: z.string().optional().describe(PROJECT_ID_PARAM),
       },
     },
     async ({ query, items, preset, project_id }) => {
@@ -105,17 +99,11 @@ export function registerRetrievalTools(server: McpServer, deps: RetrievalDeps): 
   server.registerTool(
     'search',
     {
-      description:
-        'Return a full synthesized natural-language answer in one call. Use for ' +
-        'self-contained questions that do NOT benefit from a staged discover→interpret flow. ' +
-        'Heaviest of the three tools.',
+      description: SEARCH_DESCRIPTION,
       inputSchema: {
-        query: z.string().describe('The question to answer.'),
-        preset: z
-          .enum(['fast', 'auto', 'max'])
-          .optional()
-          .describe('Override the server default preset.'),
-        project_id: z.string().optional().describe('Override the server default project_id.'),
+        query: z.string().describe(SEARCH_QUERY_PARAM),
+        preset: z.enum(['fast', 'auto', 'max']).optional().describe(PRESET_PARAM),
+        project_id: z.string().optional().describe(PROJECT_ID_PARAM),
       },
     },
     async ({ query, preset, project_id }) => {

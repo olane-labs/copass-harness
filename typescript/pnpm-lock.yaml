@@ -31,6 +31,10 @@ importers:
         version: 5.9.3
 
   packages/ai-sdk:
+    dependencies:
+      '@copass/config':
+        specifier: workspace:^0.2.0
+        version: link:../config
     devDependencies:
       '@copass/core':
         specifier: workspace:*
@@ -50,6 +54,18 @@ importers:
       zod:
         specifier: ^3.24.0
         version: 3.25.76
+
+  packages/config:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.17.0
+        version: 20.19.39
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(postcss@8.5.9)(typescript@5.9.3)(yaml@2.8.3)
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@20.19.39)
 
   packages/core:
     dependencies:
@@ -89,8 +105,8 @@ importers:
         version: 7.0.5
     devDependencies:
       '@copass/core':
-        specifier: 0.1.1
-        version: 0.1.1
+        specifier: workspace:*
+        version: link:../core
       '@types/node':
         specifier: ^20.17.0
         version: 20.19.39
@@ -123,8 +139,8 @@ importers:
         version: 1.0.38
     devDependencies:
       '@copass/core':
-        specifier: 0.1.1
-        version: 0.1.1
+        specifier: workspace:*
+        version: link:../core
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
@@ -139,6 +155,10 @@ importers:
         version: 2.1.9(@types/node@20.19.39)
 
   packages/langchain:
+    dependencies:
+      '@copass/config':
+        specifier: workspace:^0.2.0
+        version: link:../config
     devDependencies:
       '@copass/core':
         specifier: workspace:*
@@ -163,6 +183,10 @@ importers:
         version: 3.25.76
 
   packages/mastra:
+    dependencies:
+      '@copass/config':
+        specifier: workspace:^0.2.0
+        version: link:../config
     devDependencies:
       '@copass/core':
         specifier: workspace:*
@@ -185,6 +209,9 @@ importers:
 
   packages/mcp:
     dependencies:
+      '@copass/config':
+        specifier: workspace:^0.2.0
+        version: link:../config
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
         version: 1.29.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)
@@ -283,10 +310,6 @@ packages:
 
   '@chainsafe/netmask@2.0.0':
     resolution: {integrity: sha512-I3Z+6SWUoaljh3TBzCnCxjlUyN8tA+NAk5L6m9IxvCf1BENQTePzPMis97CoN/iMW1St3WN+AWCCRp+TTBRiDg==}
-
-  '@copass/core@0.1.1':
-    resolution: {integrity: sha512-GxuMyveV8N/urH30IDiOVvkTYsZt5D1qVH1bfpNMvh0W4qTzY9Yb+PUPpeTiiZC5RswUYMHVSZn0b6ATZHxXxA==}
-    engines: {node: '>=18.0.0'}
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -6376,10 +6399,6 @@ snapshots:
     dependencies:
       '@chainsafe/is-ip': 2.1.0
 
-  '@copass/core@0.1.1':
-    dependencies:
-      zod: 3.25.76
-
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -10879,7 +10898,7 @@ snapshots:
       jsonwebtoken: 9.0.3
       load-esm: 1.0.3
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.15.0)
+      retry-axios: 2.6.0(axios@1.15.0(debug@4.4.3))
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -12526,7 +12545,7 @@ snapshots:
 
   retimeable-signal@1.0.1: {}
 
-  retry-axios@2.6.0(axios@1.15.0):
+  retry-axios@2.6.0(axios@1.15.0(debug@4.4.3)):
     dependencies:
       axios: 1.15.0(debug@4.4.3)
 

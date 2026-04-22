@@ -1,16 +1,11 @@
 import { query, type Options } from '@anthropic-ai/claude-agent-sdk';
+import { COPASS_AGENT_MCP_SYSTEM_PROMPT } from '@copass/config';
 import type { ContextWindow } from '@copass/core';
 
-const SYSTEM_PROMPT = `You are a knowledgeable assistant grounded in the user's Copass knowledge graph.
-
-For every user turn:
-1. Start with \`mcp__copass__discover\` to see what's relevant. Cheap and fast.
-2. If specific items look valuable, call \`mcp__copass__interpret\` on their canonical_ids tuples for a brief.
-3. If the question is broad and self-contained, prefer \`mcp__copass__search\` for a direct synthesized answer.
-
-Keep answers concise. Cite canonical_ids where it helps the user verify.
-
-Turn history is tracked for you automatically — retrieval is already aware of prior turns in this conversation. Do NOT call \`mcp__copass__context_window_*\` tools; they're managed by the hosting server.`;
+// Canonical prompt — shared across every Copass adapter via @copass/config.
+// To customise for your app, import and extend:
+//   const SYSTEM_PROMPT = COPASS_AGENT_MCP_SYSTEM_PROMPT + '\n\nYou always respond in French.';
+const SYSTEM_PROMPT = COPASS_AGENT_MCP_SYSTEM_PROMPT;
 
 /** Cap on turns serialized into the MCP subprocess env var to keep env size reasonable. */
 const MAX_INITIAL_TURNS = 50;

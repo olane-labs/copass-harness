@@ -8,5 +8,5 @@ export default defineConfig({
   splitting: false,
   sourcemap: true,
   target: 'es2022',
-  external: ['@copass/core', 'ai', 'zod'],
+  external: ['@copass/config', '@copass/core', 'ai', 'zod'],
 });
