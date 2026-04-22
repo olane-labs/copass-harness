@@ -94,7 +94,7 @@ All retrieval tools are **automatically window-aware** when a window has been cr
 | `COPASS_SANDBOX_ID` | ✅ | — |
 | `COPASS_API_URL` | — | `https://ai.copass.id` |
 | `COPASS_PROJECT_ID` | — | (none) |
-| `COPASS_PRESET` | — | `fast` |
+| `COPASS_PRESET` | — | `auto` |
 | `COPASS_INGEST_DATA_SOURCE_ID` | — | (none — required for `ingest` unless passed per call) |
 | `COPASS_CONTEXT_WINDOW_ID` | — | (none — if set, the server auto-attaches to this window on startup and makes it the active window) |
 | `COPASS_CONTEXT_WINDOW_INITIAL_TURNS` | — | (none — JSON array of `{role, content}` used to seed the window's turn buffer on startup so retrieval is window-aware from the first tool call) |

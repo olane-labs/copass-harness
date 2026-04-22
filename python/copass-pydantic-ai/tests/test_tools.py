@@ -124,13 +124,13 @@ async def test_interpret_forwards_items_and_preset() -> None:
 
 
 @pytest.mark.asyncio
-async def test_interpret_defaults_preset_to_fast() -> None:
+async def test_interpret_defaults_preset_to_auto() -> None:
     client = _make_client()
     _, interpret, _ = copass_tools(client=client, sandbox_id="sb1")
 
     await interpret(query="q", items=[["c1"]])
 
-    assert client.interpret.await_args.kwargs["preset"] == "fast"  # type: ignore[attr-defined]
+    assert client.interpret.await_args.kwargs["preset"] == "auto"  # type: ignore[attr-defined]
 
 
 @pytest.mark.asyncio

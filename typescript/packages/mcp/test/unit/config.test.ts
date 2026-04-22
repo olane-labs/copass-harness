@@ -29,7 +29,7 @@ describe('loadConfig', () => {
     });
 
     expect(cfg.api_url).toBe('https://ai.copass.id');
-    expect(cfg.preset).toBe('fast');
+    expect(cfg.preset).toBe('auto');
     expect(cfg.project_id).toBeUndefined();
     expect(cfg.ingest_data_source_id).toBeUndefined();
   });

@@ -26,7 +26,10 @@ export interface CopassToolsOptions {
   window?: WindowLike;
   /**
    * Preset for `interpret` and `search` (ignored by `discover`).
-   * Defaults to `"fast"`.
+   * Defaults to `"auto"` — required for `interpret`, since the server's
+   * interpret-adapter produces `semantic_alignment_scopes` that only the
+   * `auto` preset's providers consume. With `"fast"`, `interpret` would
+   * silently return "No supporting context could be retrieved".
    */
   preset?: SearchPreset;
 }
@@ -59,7 +62,7 @@ export interface CopassToolsOptions {
  * ```
  */
 export function copassTools(options: CopassToolsOptions) {
-  const { client, sandbox_id, project_id, window, preset = 'fast' } = options;
+  const { client, sandbox_id, project_id, window, preset = 'auto' } = options;
 
   const discover = tool(
     async ({ query }: { query: string }) => {

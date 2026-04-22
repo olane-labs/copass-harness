@@ -93,7 +93,31 @@ export interface InterpretResponse {
   query: string;
 }
 
-export type SearchPreset = 'fast' | 'auto' | 'discover' | 'max';
+/**
+ * `/search` retrieval modes accepted by the Copass API.
+ *
+ * Base presets trade off latency for depth:
+ *   - `fast`     — low-latency agent-oriented
+ *   - `auto`     — balanced quality (default server-side)
+ *   - `discover` — returns raw data-chunk menu instead of a narrative answer
+ *   - `sql`      — direct text-to-SQL over the ontology event store
+ *   - `max`      — reserved, returns 403 for public callers
+ *
+ * `<base>-decompose` variants run an LLM pre-pass that breaks the question
+ * into an ordered list of sub-questions, then execute `<base>` on each
+ * before a single combined synthesis step. Only valid on `/search`;
+ * `/interpret` does not accept decompose presets.
+ */
+export type SearchPreset =
+  | 'fast'
+  | 'auto'
+  | 'discover'
+  | 'sql'
+  | 'max'
+  | 'fast-decompose'
+  | 'auto-decompose'
+  | 'discover-decompose'
+  | 'sql-decompose';
 
 export interface SearchRequest {
   query: string;

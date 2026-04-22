@@ -114,14 +114,14 @@ describe('copassTools (LangChain)', () => {
       expect(parsed).toEqual({ brief: 'Checkout retries on 5xx from Stripe.' });
     });
 
-    it('defaults preset to "fast" when not provided', async () => {
+    it('defaults preset to "auto" when not provided', async () => {
       const tools = copassTools({ client, sandbox_id: 'sb1' });
 
       await tools.interpret.invoke({ query: 'q', items: [['c1']] });
 
       expect(client.retrieval.interpret).toHaveBeenCalledWith(
         'sb1',
-        expect.objectContaining({ preset: 'fast' }),
+        expect.objectContaining({ preset: 'auto' }),
       );
     });
   });

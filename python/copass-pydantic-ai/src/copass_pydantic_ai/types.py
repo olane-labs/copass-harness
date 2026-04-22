@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal, Protocol, runtime_checkable
 
-SearchPreset = Literal["fast", "auto", "max"]
+SearchPreset = Literal["fast", "auto", "discover", "sql", "max"]
 
 
 @runtime_checkable

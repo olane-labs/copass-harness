@@ -1,11 +1,13 @@
 import 'dotenv/config';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 import type { ContextWindow } from '@copass/core';
-import { chat } from './agent.js';
+import { chatStream } from './agent.js';
 import { CHAT_UI } from './chat-ui.js';
 import { attachThread, createThread } from './copass.js';
+import { TEST_MODES, runTestModeStream } from './test-modes.js';
 
 /**
  * In-memory thread state. Two maps keyed by Copass `dataSourceId`
@@ -21,9 +23,6 @@ import { attachThread, createThread } from './copass.js';
  *   own chat history carries across turns.
  *
  * Scaffold only — persist both in Redis / your DB / a file for production.
- * On server restart the maps are lost; clients passing a stale `threadId`
- * will fall through to `attachThread` below (window state re-hydrated from
- * whatever turns the caller still has on their side, or empty otherwise).
  */
 const threadWindows = new Map<string, ContextWindow>();
 const threadSessions = new Map<string, string>();
@@ -32,11 +31,6 @@ async function getOrCreateWindow(threadId?: string): Promise<ContextWindow> {
   if (threadId) {
     const existing = threadWindows.get(threadId);
     if (existing) return existing;
-    // Cold-start recovery: the server was restarted (or this process never
-    // saw this thread). Reattach to the underlying data source; turn buffer
-    // starts empty. Turns from the past will live on the server side in
-    // the data source chunks but won't feed push-down exclusion until new
-    // turns accumulate.
     const attached = await attachThread(threadId);
     threadWindows.set(threadId, attached);
     return attached;
@@ -49,6 +43,12 @@ async function getOrCreateWindow(threadId?: string): Promise<ContextWindow> {
 const ChatRequest = z.object({
   message: z.string().min(1),
   threadId: z.string().optional(),
+  /**
+   * Optional preset mode. When omitted, the default Agent-SDK + MCP flow
+   * runs. When set, the server bypasses the agent and calls the retrieval
+   * API directly so each UI selection maps 1:1 to a specific shape.
+   */
+  preset: z.enum(TEST_MODES).optional(),
 });
 
 const app = new Hono();
@@ -63,28 +63,12 @@ app.post('/chat', async (c) => {
     return c.json({ error: 'Invalid request body', detail: String(err) }, 400);
   }
 
+  // Resolve the window synchronously — if this throws, the client gets a
+  // plain JSON error instead of a malformed SSE stream.
+  let window: ContextWindow;
   try {
-    const window = await getOrCreateWindow(body.threadId);
-    const resumeSessionId = threadSessions.get(window.dataSourceId);
-
-    // Record the user turn before invoking the agent. This pushes content
-    // into the data source AND updates the window's local buffer so the
-    // subprocess spawned inside `chat()` receives it via initial turns.
+    window = await getOrCreateWindow(body.threadId);
     await window.addTurn({ role: 'user', content: body.message });
-
-    const { answer, sessionId } = await chat({
-      message: body.message,
-      window,
-      resumeSessionId,
-    });
-
-    // Symmetric — record the assistant reply so it shows up in the history
-    // passed to the next turn's retrieval.
-    await window.addTurn({ role: 'assistant', content: answer });
-
-    if (sessionId) threadSessions.set(window.dataSourceId, sessionId);
-
-    return c.json({ threadId: window.dataSourceId, answer });
   } catch (err) {
     console.error(err);
     return c.json(
@@ -92,6 +76,69 @@ app.post('/chat', async (c) => {
       500,
     );
   }
+
+  return streamSSE(c, async (stream) => {
+    // `meta` frame first so the client can persist threadId immediately
+    // and show it in the UI before any retrieval latency accrues.
+    await stream.writeSSE({
+      event: 'meta',
+      data: JSON.stringify({ threadId: window.dataSourceId }),
+    });
+
+    const events = body.preset
+      ? runTestModeStream(body.preset, body.message, window)
+      : chatStream({
+          message: body.message,
+          window,
+          resumeSessionId: threadSessions.get(window.dataSourceId),
+        });
+
+    const textChunks: string[] = [];
+    let sessionId: string | undefined;
+
+    try {
+      for await (const ev of events) {
+        switch (ev.type) {
+          case 'tool-call':
+            await stream.writeSSE({
+              event: 'tool-call',
+              data: JSON.stringify({ id: ev.id, name: ev.name, input: ev.input }),
+            });
+            break;
+          case 'tool-result':
+            await stream.writeSSE({
+              event: 'tool-result',
+              data: JSON.stringify({ id: ev.id, name: ev.name, output: ev.output }),
+            });
+            break;
+          case 'text':
+            textChunks.push(ev.delta);
+            await stream.writeSSE({
+              event: 'text',
+              data: JSON.stringify({ delta: ev.delta }),
+            });
+            break;
+          case 'final':
+            sessionId = ev.sessionId;
+            break;
+        }
+      }
+
+      const answer = textChunks.join('');
+      await window.addTurn({ role: 'assistant', content: answer });
+      if (sessionId) threadSessions.set(window.dataSourceId, sessionId);
+
+      await stream.writeSSE({ event: 'done', data: '{}' });
+    } catch (err) {
+      console.error(err);
+      await stream.writeSSE({
+        event: 'error',
+        data: JSON.stringify({
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      });
+    }
+  });
 });
 
 const port = Number(process.env.PORT ?? 3000);

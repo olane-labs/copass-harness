@@ -61,10 +61,7 @@ describe('copassTools (Mastra)', () => {
     it('forwards query + sandbox_id, returns trimmed response', async () => {
       const tools = copassTools({ client, sandbox_id: 'sb1' });
 
-      const result = await tools.discover.execute!({
-        context: { query: 'checkout' },
-        ...execCtx,
-      });
+      const result = await tools.discover.execute!({ query: 'checkout' }, execCtx);
 
       expect(client.retrieval.discover).toHaveBeenCalledWith(
         'sb1',
@@ -89,7 +86,7 @@ describe('copassTools (Mastra)', () => {
         window,
       });
 
-      await tools.discover.execute!({ context: { query: 'x' }, ...execCtx });
+      await tools.discover.execute!({ query: 'x' }, execCtx);
 
       expect(client.retrieval.discover).toHaveBeenCalledWith(
         'sb1',
@@ -102,10 +99,10 @@ describe('copassTools (Mastra)', () => {
     it('forwards items + preset, returns brief only', async () => {
       const tools = copassTools({ client, sandbox_id: 'sb1', preset: 'auto' });
 
-      const result = await tools.interpret.execute!({
-        context: { query: 'why is checkout flaky?', items: [['c1', 'c2']] },
-        ...execCtx,
-      });
+      const result = await tools.interpret.execute!(
+        { query: 'why is checkout flaky?', items: [['c1', 'c2']] },
+        execCtx,
+      );
 
       expect(client.retrieval.interpret).toHaveBeenCalledWith(
         'sb1',
@@ -118,17 +115,14 @@ describe('copassTools (Mastra)', () => {
       expect(result).toEqual({ brief: 'Checkout retries on 5xx from Stripe.' });
     });
 
-    it('defaults preset to "fast" when not provided', async () => {
+    it('defaults preset to "auto" when not provided', async () => {
       const tools = copassTools({ client, sandbox_id: 'sb1' });
 
-      await tools.interpret.execute!({
-        context: { query: 'q', items: [['c1']] },
-        ...execCtx,
-      });
+      await tools.interpret.execute!({ query: 'q', items: [['c1']] }, execCtx);
 
       expect(client.retrieval.interpret).toHaveBeenCalledWith(
         'sb1',
-        expect.objectContaining({ preset: 'fast' }),
+        expect.objectContaining({ preset: 'auto' }),
       );
     });
   });
@@ -138,10 +132,10 @@ describe('copassTools (Mastra)', () => {
       const window: WindowLike = { getTurns: () => [] };
       const tools = copassTools({ client, sandbox_id: 'sb1', window, preset: 'auto' });
 
-      const result = await tools.search.execute!({
-        context: { query: 'how does auth handle refresh?' },
-        ...execCtx,
-      });
+      const result = await tools.search.execute!(
+        { query: 'how does auth handle refresh?' },
+        execCtx,
+      );
 
       expect(client.retrieval.search).toHaveBeenCalledWith(
         'sb1',

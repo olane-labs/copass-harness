@@ -49,10 +49,17 @@ describe('copassTools', () => {
     const tools = copassTools({ client, sandbox_id: 'sb1' });
 
     for (const name of ['discover', 'interpret', 'search'] as const) {
-      expect(tools[name]).toBeDefined();
-      expect(typeof tools[name].description).toBe('string');
-      expect(tools[name].parameters).toBeDefined();
-      expect(typeof tools[name].execute).toBe('function');
+      const t = tools[name] as unknown as {
+        description: string;
+        inputSchema: unknown;
+        execute: unknown;
+      };
+      expect(t).toBeDefined();
+      expect(typeof t.description).toBe('string');
+      // ai v5+: `parameters` was renamed to `inputSchema` on the tool
+      // definition object returned by `tool()`.
+      expect(t.inputSchema).toBeDefined();
+      expect(typeof t.execute).toBe('function');
     }
   });
 
@@ -114,14 +121,14 @@ describe('copassTools', () => {
       expect(result).toEqual({ brief: 'Checkout retries on 5xx from Stripe.' });
     });
 
-    it('defaults preset to "fast" when not provided', async () => {
+    it('defaults preset to "auto" when not provided', async () => {
       const tools = copassTools({ client, sandbox_id: 'sb1' });
 
       await tools.interpret.execute!({ query: 'q', items: [['c1']] }, execOpts);
 
       expect(client.retrieval.interpret).toHaveBeenCalledWith(
         'sb1',
-        expect.objectContaining({ preset: 'fast' }),
+        expect.objectContaining({ preset: 'auto' }),
       );
     });
   });

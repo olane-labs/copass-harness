@@ -1,6 +1,7 @@
 import { query, type Options } from '@anthropic-ai/claude-agent-sdk';
 import { COPASS_AGENT_MCP_SYSTEM_PROMPT } from '@copass/config';
 import type { ContextWindow } from '@copass/core';
+import type { StreamEvent } from './stream-events.js';
 
 // Canonical prompt — shared across every Copass adapter via @copass/config.
 // To customise for your app, import and extend:
@@ -18,28 +19,22 @@ export interface ChatArgs {
   resumeSessionId?: string;
 }
 
-export interface ChatResult {
-  answer: string;
-  sessionId: string;
-}
-
 /**
- * Run one turn of the agent loop.
+ * Run one turn of the agent loop and stream each text / tool event.
  *
- * Spawns `@copass/mcp` as a stdio MCP subprocess with:
- * - `COPASS_CONTEXT_WINDOW_ID`: the thread's data_source_id so the subprocess
- *   attaches to the right window
- * - `COPASS_CONTEXT_WINDOW_INITIAL_TURNS`: JSON-serialized recent turns so
- *   retrieval is window-aware from the very first tool call (subprocesses
- *   are ephemeral; without this, the local buffer would reset every spawn)
+ * Spawns `@copass/mcp` as a stdio MCP subprocess with the context-window
+ * env wiring (see `COPASS_CONTEXT_WINDOW_*`) so retrieval is window-aware
+ * from the very first tool call.
  *
- * On subsequent turns, pass `resumeSessionId` so the Agent SDK restores the
- * conversation and Claude sees its own prior replies in context.
+ * The generator yields `tool-call` + `tool-result` pairs as the agent
+ * invokes MCP tools and assistant `text` blocks as they arrive, then a
+ * final `final` event carrying the Agent SDK session id. Callers can
+ * accumulate text + forward events downstream (e.g. to an SSE stream).
  */
-export async function chat(args: ChatArgs): Promise<ChatResult> {
+export async function* chatStream(args: ChatArgs): AsyncGenerator<StreamEvent> {
   const { message, window, resumeSessionId } = args;
 
-  // The Hono server calls window.addTurn before + after this function, so
+  // The Hono server calls window.addTurn before invoking us, so
   // window.getTurns() already includes the just-arrived user message.
   const recentTurns = window.getTurns().slice(-MAX_INITIAL_TURNS);
 
@@ -75,7 +70,9 @@ export async function chat(args: ChatArgs): Promise<ChatResult> {
   }
 
   let sessionId = resumeSessionId ?? '';
-  const chunks: string[] = [];
+  // Remember tool names by id so `tool-result` events can surface them in
+  // the UI (the Agent SDK's `tool_result` blocks only carry `tool_use_id`).
+  const toolNames = new Map<string, string>();
 
   for await (const msg of query({ prompt: message, options })) {
     if (msg.type === 'system') {
@@ -83,7 +80,30 @@ export async function chat(args: ChatArgs): Promise<ChatResult> {
       if (sys.session_id) sessionId = sys.session_id;
     } else if (msg.type === 'assistant') {
       for (const block of msg.message.content) {
-        if (block.type === 'text') chunks.push(block.text);
+        if (block.type === 'text') {
+          yield { type: 'text', delta: block.text };
+        } else if (block.type === 'tool_use') {
+          toolNames.set(block.id, block.name);
+          yield {
+            type: 'tool-call',
+            id: block.id,
+            name: block.name,
+            input: block.input,
+          };
+        }
+      }
+    } else if (msg.type === 'user') {
+      const content = (msg.message as { content?: unknown }).content;
+      if (!Array.isArray(content)) continue;
+      for (const block of content as Array<{ type?: string; tool_use_id?: string; content?: unknown }>) {
+        if (block.type === 'tool_result' && block.tool_use_id) {
+          yield {
+            type: 'tool-result',
+            id: block.tool_use_id,
+            name: toolNames.get(block.tool_use_id) ?? '',
+            output: block.content,
+          };
+        }
       }
     } else if (msg.type === 'result') {
       const result = msg as typeof msg & { session_id?: string };
@@ -91,5 +111,5 @@ export async function chat(args: ChatArgs): Promise<ChatResult> {
     }
   }
 
-  return { answer: chunks.join(''), sessionId };
+  yield { type: 'final', sessionId };
 }
