@@ -9,14 +9,12 @@ An agent is the composition of:
 - a **system prompt** (role + instructions fed on every turn)
 - an **AgentToolRegistry** holding the *static* tools
 - an optional **AgentToolResolver** producing *dynamic* tools per
-  invocation from the ``AgentScope`` on ``AgentInvocationContext``
+  invocation
 - an **AgentBackend** (the runtime that actually drives turns)
 
 ``BaseAgent`` itself has no turn-execution logic — both ``run`` and
 ``stream`` compute the effective tool registry for the invocation
-(via :meth:`build_tools`) and delegate to the backend. Subclasses
-exist to bind identity + system prompt + resolver shape; they rarely
-need to override ``run`` / ``stream``.
+(via :meth:`build_tools`) and delegate to the backend.
 """
 
 from __future__ import annotations
@@ -25,15 +23,15 @@ import logging
 from abc import ABC
 from typing import AsyncIterator, List, Optional
 
-from copass_anthropic_agents.backends.base_backend import (
+from copass_core_agents.backends.base_backend import (
     AgentBackend,
     AgentRunResult,
 )
-from copass_anthropic_agents.base_tool import AgentTool
-from copass_anthropic_agents.events import AgentEvent
-from copass_anthropic_agents.invocation_context import AgentInvocationContext
-from copass_anthropic_agents.tool_registry import AgentToolRegistry
-from copass_anthropic_agents.tool_resolver import (
+from copass_core_agents.base_tool import AgentTool
+from copass_core_agents.events import AgentEvent
+from copass_core_agents.invocation_context import AgentInvocationContext
+from copass_core_agents.tool_registry import AgentToolRegistry
+from copass_core_agents.tool_resolver import (
     AgentToolResolver,
     ToolConflictError,
     ToolConflictPolicy,
@@ -52,9 +50,6 @@ class BaseAgent(ABC):
     callers should subclass with concrete identity and prompt.
 
     Either ``tools`` or ``tool_resolver`` (or both) must be provided.
-    At invocation time :meth:`build_tools` merges the static registry
-    with the resolver's output using ``on_conflict`` to break name
-    collisions.
     """
 
     def __init__(
@@ -109,17 +104,7 @@ class BaseAgent(ABC):
     async def build_tools(
         self, context: AgentInvocationContext
     ) -> AgentToolRegistry:
-        """Compute the effective tool registry for this invocation.
-
-        Backends call this at the start of a turn. For agents without
-        a ``tool_resolver`` this is a cheap pass-through that returns
-        ``self.tools`` unchanged. Agents with a resolver get a fresh
-        registry every call, built from:
-
-        1. The static ``self.tools`` as the baseline.
-        2. The ``tool_resolver.resolve(context)`` output layered on top.
-        3. Collisions resolved per ``self.on_conflict``.
-        """
+        """Compute the effective tool registry for this invocation."""
         if self.tool_resolver is None:
             return self.tools
 

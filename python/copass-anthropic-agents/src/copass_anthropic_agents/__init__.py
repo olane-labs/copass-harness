@@ -1,58 +1,51 @@
 """Copass agent SDK for Anthropic Managed Agents.
 
-Primitives:
+This package owns the Anthropic-specific backend. All provider-neutral
+ABCs (``BaseAgent``, ``AgentTool``, ``AgentBackend``, events, scope,
+registries) live in :mod:`copass_core_agents` and are re-exported here
+for convenience — dev code can import everything it needs from one
+place.
 
-    Core
-        BaseAgent               — identity + prompt + tools + backend
-        CopassManagedAgent      — thin convenience subclass
-        AgentScope              — tenancy payload
-        AgentInvocationContext  — per-call runtime context
-        AgentTool               — ABC for a tool an agent can invoke
-        AgentToolRegistry       — per-agent collection of tools
-        AgentToolResolver       — scope-aware dynamic tool producer
-        ToolSpec, ToolCall      — tool catalog shapes
-        ToolConflictPolicy      — "error" | "dynamic_wins" | "static_wins"
-        ToolConflictError
+Public surface:
 
-    Events (emitted by AgentBackend.stream)
-        AgentEvent              — tagged union
-        AgentTextDelta
-        AgentToolCall
-        AgentToolResult
-        AgentFinish
-
-    Backends
-        AgentBackend            — ABC
-        AgentRunResult          — reduced run() output
-        ManagedAgentBackend     — Anthropic Managed Agents
+    Anthropic-specific (owned here):
+        ManagedAgentBackend
+        CopassManagedAgent      — convenience subclass of BaseAgent
         DEFAULT_ENVIRONMENT_CONFIG
         SESSION_ID_HANDLE
+        DEFAULT_MODEL
 
-    Registries (optional lookup-by-name)
+    Provider-neutral (re-exported from copass_core_agents):
+        BaseAgent, AgentScope, AgentInvocationContext
+        AgentTool, AgentToolRegistry, AgentToolResolver
+        ToolSpec, ToolCall, ToolConflictPolicy, ToolConflictError
+        AgentEvent, AgentTextDelta, AgentToolCall, AgentToolResult,
+        AgentFinish
+        AgentBackend, AgentRunResult
         register_agent, get_agent_class, list_agents
         register_agent_tool, get_agent_tool, try_get_agent_tool,
         list_agent_tools
 """
 
-from copass_anthropic_agents.backends import (
-    DEFAULT_ENVIRONMENT_CONFIG,
-    SESSION_ID_HANDLE,
+# Re-export core (vendor-neutral) primitives for one-line imports.
+from copass_core_agents import (
     AgentBackend,
-    AgentRunResult,
-    ManagedAgentBackend,
-)
-from copass_anthropic_agents.base_agent import BaseAgent
-from copass_anthropic_agents.base_tool import AgentTool, ToolCall, ToolSpec
-from copass_anthropic_agents.events import (
     AgentEvent,
     AgentFinish,
+    AgentInvocationContext,
+    AgentRunResult,
+    AgentScope,
     AgentTextDelta,
+    AgentTool,
     AgentToolCall,
+    AgentToolRegistry,
+    AgentToolResolver,
     AgentToolResult,
-)
-from copass_anthropic_agents.invocation_context import AgentInvocationContext
-from copass_anthropic_agents.managed_agent import DEFAULT_MODEL, CopassManagedAgent
-from copass_anthropic_agents.registry import (
+    BaseAgent,
+    ToolCall,
+    ToolConflictError,
+    ToolConflictPolicy,
+    ToolSpec,
     get_agent_class,
     get_agent_tool,
     list_agent_tools,
@@ -61,22 +54,27 @@ from copass_anthropic_agents.registry import (
     register_agent_tool,
     try_get_agent_tool,
 )
-from copass_anthropic_agents.scope import AgentScope
-from copass_anthropic_agents.tool_registry import AgentToolRegistry
-from copass_anthropic_agents.tool_resolver import (
-    AgentToolResolver,
-    ToolConflictError,
-    ToolConflictPolicy,
+
+# Anthropic-specific (owned here).
+from copass_anthropic_agents.backends.managed_agent_backend import (
+    DEFAULT_ENVIRONMENT_CONFIG,
+    SESSION_ID_HANDLE,
+    ManagedAgentBackend,
 )
+from copass_anthropic_agents.managed_agent import DEFAULT_MODEL, CopassManagedAgent
 
 __version__ = "0.1.0"
 
 __all__ = [
     "__version__",
-    # Core
-    "BaseAgent",
+    # Anthropic-specific
     "CopassManagedAgent",
     "DEFAULT_MODEL",
+    "ManagedAgentBackend",
+    "DEFAULT_ENVIRONMENT_CONFIG",
+    "SESSION_ID_HANDLE",
+    # Re-exported from copass_core_agents
+    "BaseAgent",
     "AgentScope",
     "AgentInvocationContext",
     "AgentTool",
@@ -86,19 +84,13 @@ __all__ = [
     "ToolCall",
     "ToolConflictError",
     "ToolConflictPolicy",
-    # Events
     "AgentEvent",
     "AgentTextDelta",
     "AgentToolCall",
     "AgentToolResult",
     "AgentFinish",
-    # Backends
     "AgentBackend",
     "AgentRunResult",
-    "ManagedAgentBackend",
-    "DEFAULT_ENVIRONMENT_CONFIG",
-    "SESSION_ID_HANDLE",
-    # Registries
     "register_agent",
     "get_agent_class",
     "list_agents",

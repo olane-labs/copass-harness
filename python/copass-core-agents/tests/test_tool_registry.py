@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from copass_anthropic_agents import AgentTool, AgentToolRegistry, ToolSpec
+from copass_core_agents import AgentTool, AgentToolRegistry, ToolSpec
 
 
 class _DummyTool(AgentTool):

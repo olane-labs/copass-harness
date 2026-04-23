@@ -1,28 +1,12 @@
-"""Package-level registries for agent classes and shared tools.
-
-Mirrors the ``register_provider`` pattern used in the Copass backend
-repo. Two separate registries:
-
-- **Agent registry** — maps identity string → ``BaseAgent`` subclass.
-  Convenience for DI / lookup-by-identity flows.
-- **Tool registry** — maps tool-spec name → ``AgentTool`` instance.
-  For process-wide reusable tools (no per-user state). Per-user /
-  per-scope tools belong on a per-agent ``AgentToolRegistry`` or an
-  ``AgentToolResolver``, NOT here.
-
-Neither registry is required for normal use — ``BaseAgent`` subclasses
-can be constructed directly. The registries exist for cases where a
-dispatcher needs to look up "the agent named X" without importing the
-class.
-"""
+"""Package-level registries for agent classes and shared tools."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, List, Optional, Type
 
 if TYPE_CHECKING:
-    from copass_anthropic_agents.base_agent import BaseAgent
-    from copass_anthropic_agents.base_tool import AgentTool
+    from copass_core_agents.base_agent import BaseAgent
+    from copass_core_agents.base_tool import AgentTool
 
 
 _AGENT_REGISTRY: Dict[str, "Type[BaseAgent]"] = {}
@@ -31,13 +15,7 @@ _AGENT_TOOL_REGISTRY: Dict[str, "AgentTool"] = {}
 
 def register_agent(identity: str):
     """Decorator to register a ``BaseAgent`` subclass under an
-    identity string.
-
-    Usage:
-        >>> @register_agent("support")
-        ... class SupportAgent(BaseAgent):
-        ...     ...
-    """
+    identity string."""
 
     def decorator(cls: "Type[BaseAgent]") -> "Type[BaseAgent]":
         _AGENT_REGISTRY[identity] = cls
@@ -47,8 +25,7 @@ def register_agent(identity: str):
 
 
 def get_agent_class(identity: str) -> "Type[BaseAgent]":
-    """Return the registered agent class for ``identity`` or raise
-    ``KeyError``."""
+    """Return the registered agent class or raise ``KeyError``."""
     try:
         return _AGENT_REGISTRY[identity]
     except KeyError:

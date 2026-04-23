@@ -2,8 +2,7 @@
 
 A backend is the seam between the provider-neutral agent surface
 (``BaseAgent``, ``AgentTool``, ``AgentEvent``) and a concrete
-SDK/provider (Anthropic managed agents today; OpenAI, Google, a local
-loop in future releases).
+SDK/provider.
 
 Design rules:
 
@@ -15,9 +14,10 @@ Design rules:
   Per-request state lives on ``AgentInvocationContext``, not on the
   backend.
 
-Two entry points. Implementations must honor both — ``run`` should
-typically be implemented by draining ``stream`` and reducing the
-events into an ``AgentRunResult``.
+Concrete backends live in per-provider packages
+(``copass-anthropic-agents``, future ``copass-openai-agents``,
+``copass-google-agents``). This file and ``AgentRunResult`` are the
+only ABC surface they implement against.
 """
 
 from __future__ import annotations
@@ -26,30 +26,16 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, AsyncIterator, List, Optional
 
-from copass_anthropic_agents.events import AgentEvent
-from copass_anthropic_agents.invocation_context import AgentInvocationContext
+from copass_core_agents.events import AgentEvent
+from copass_core_agents.invocation_context import AgentInvocationContext
 
 if TYPE_CHECKING:
-    from copass_anthropic_agents.base_agent import BaseAgent
+    from copass_core_agents.base_agent import BaseAgent
 
 
 @dataclass(frozen=True)
 class AgentRunResult:
-    """Reduced output of a non-streaming ``AgentBackend.run``.
-
-    Attributes:
-        final_text: Concatenated assistant text for the turn. Empty
-            string if the model finished with only tool calls and no
-            prose.
-        tool_calls: Every ``AgentToolCall`` that fired during the turn,
-            paired with its matching ``AgentToolResult`` via ``call_id``.
-            Retained so callers can audit what the model asked for.
-        stop_reason: The terminal ``AgentFinish.stop_reason``.
-        usage: Provider-reported token usage. Opaque shape — the
-            backend decides the keys. Empty dict if unavailable.
-        session_id: Provider-managed session handle for continuation.
-            ``None`` when the provider doesn't expose one.
-    """
+    """Reduced output of a non-streaming ``AgentBackend.run``."""
 
     final_text: str
     tool_calls: List[dict] = field(default_factory=list)
@@ -72,8 +58,7 @@ class AgentBackend(ABC):
 
     @property
     def config(self) -> dict:
-        """Backend-specific configuration. Read-only view — mutating
-        the returned dict does not rebind the backend's config."""
+        """Backend-specific configuration. Read-only view."""
         return dict(self._config)
 
     @abstractmethod
@@ -84,7 +69,7 @@ class AgentBackend(ABC):
         context: AgentInvocationContext,
     ) -> AgentRunResult:
         """Drive the conversation to a stop condition, return a
-        reduced result. See ``AgentRunResult`` for shape."""
+        reduced result."""
         ...
 
     @abstractmethod
@@ -95,13 +80,7 @@ class AgentBackend(ABC):
         context: AgentInvocationContext,
     ) -> AsyncIterator[AgentEvent]:
         """Drive the conversation and yield ``AgentEvent`` as they
-        occur.
-
-        Not declared ``async`` because ``AsyncIterator`` is the return
-        type — the method itself returns an async iterator. Concrete
-        implementations are typically ``async def`` with ``yield``
-        statements; that shape matches this signature.
-        """
+        occur."""
         ...
 
 

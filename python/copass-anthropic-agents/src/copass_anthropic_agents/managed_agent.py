@@ -42,14 +42,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from copass_anthropic_agents.backends.managed_agent_backend import ManagedAgentBackend
-from copass_anthropic_agents.base_agent import BaseAgent
-from copass_anthropic_agents.tool_registry import AgentToolRegistry
-from copass_anthropic_agents.tool_resolver import ToolConflictPolicy
+from copass_core_agents.base_agent import BaseAgent
+from copass_core_agents.tool_registry import AgentToolRegistry
+from copass_core_agents.tool_resolver import ToolConflictPolicy
 
 if TYPE_CHECKING:
     from anthropic import AsyncAnthropic
 
-    from copass_anthropic_agents.tool_resolver import AgentToolResolver
+    from copass_core_agents.tool_resolver import AgentToolResolver
 
 
 DEFAULT_MODEL = "claude-opus-4-7"

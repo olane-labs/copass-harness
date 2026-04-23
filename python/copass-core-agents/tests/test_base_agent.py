@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from copass_anthropic_agents import (
+from copass_core_agents import (
     AgentBackend,
     AgentInvocationContext,
     AgentScope,

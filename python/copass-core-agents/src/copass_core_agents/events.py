@@ -1,9 +1,8 @@
-"""Streaming event types for the agents SDK.
+"""Streaming event types for the core agents SDK.
 
 ``AgentEvent`` is a tagged union consumed by callers of
 ``BaseAgent.stream(...)``. The backend emits events as it drives a
-conversation forward; the caller decides how to render them (write to
-a websocket, log them, build a final transcript, etc.).
+conversation forward; the caller decides how to render them.
 
 Events are deliberately runtime-agnostic — they describe *what*
 happened in the conversation (text appeared, a tool was called, a
@@ -16,8 +15,7 @@ Design notes:
 - All events are ``@dataclass(frozen=True)`` so consumers can safely
   fan them out without worrying about mutation.
 - ``AgentEvent`` is a ``Union`` rather than an ABC. Pattern-matching
-  on type (``match evt: case AgentTextDelta(): ...``) is the expected
-  consumption pattern.
+  on type is the expected consumption pattern.
 - Tool results are carried as JSON-serializable dicts to match the
   return contract of ``AgentTool.invoke``.
 - ``AgentFinish.session_id`` carries the provider-managed session
@@ -51,12 +49,6 @@ class AgentToolCall:
     backend is responsible for routing ``name`` + ``arguments`` through
     the agent's ``AgentToolRegistry`` and then emitting a matching
     ``AgentToolResult``.
-
-    Attributes:
-        call_id: Provider-assigned identifier the backend uses to
-            correlate this call with its result. Opaque to callers.
-        name: Tool name as registered in the ``AgentToolRegistry``.
-        arguments: JSON-decoded tool arguments as provided by the model.
     """
 
     call_id: str
@@ -90,8 +82,7 @@ class AgentFinish:
 
     ``session_id`` is the provider-managed conversation handle the
     caller can pass back to continue the conversation on the next
-    turn. ``None`` from backends that don't expose a session primitive
-    (or when continuation is not supported).
+    turn. ``None`` from backends that don't expose a session primitive.
     """
 
     stop_reason: str

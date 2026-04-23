@@ -1,33 +1,9 @@
 """AgentTool — tool ABC callable by an agent during a turn.
 
 ``ToolSpec`` / ``ToolCall`` are the provider-neutral catalog shapes.
-They're defined here rather than imported from a neutral shared
-package because this SDK is standalone — Copass's server repo may
-later lift these dataclasses into a shared package and have both
-repos import from there, but for now the SDK owns its own copies.
-
-Usage:
-    Concrete tools implement ``spec`` and ``invoke(arguments, *,
-    context=...)``. The ``AgentToolRegistry`` on a ``BaseAgent``
-    collects instances; backends look them up by ``spec.name`` when
-    handling a tool-use turn from the model.
-
-Example:
-    >>> class EchoTool(AgentTool):
-    ...     @property
-    ...     def spec(self) -> ToolSpec:
-    ...         return ToolSpec(
-    ...             name="echo",
-    ...             description="Echo a message back.",
-    ...             input_schema={
-    ...                 "type": "object",
-    ...                 "properties": {"text": {"type": "string"}},
-    ...                 "required": ["text"],
-    ...             },
-    ...         )
-    ...
-    ...     async def invoke(self, arguments: dict, *, context=None) -> dict:
-    ...         return {"echoed": arguments["text"]}
+Defined here in the core package; provider adapters (Anthropic,
+OpenAI, Google) translate them into provider-specific tool-use
+catalog payloads.
 """
 
 from __future__ import annotations
@@ -36,7 +12,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
 
-from copass_anthropic_agents.invocation_context import AgentInvocationContext
+from copass_core_agents.invocation_context import AgentInvocationContext
 
 
 @dataclass(frozen=True)
@@ -44,16 +20,8 @@ class ToolSpec:
     """Catalog entry for one tool — what the model sees.
 
     Shape matches the JSON-schema-based tool-use conventions across
-    providers (Anthropic, OpenAI, Google) so a single ``ToolSpec`` can
-    be passed to any backend's ``tools=[]`` parameter after trivial
-    adaptation.
-
-    Attributes:
-        name: Stable identifier. Used for dispatch and logging.
-        description: Human-readable — the model reads this to decide
-            when to call the tool. Write it as if the model is the
-            reader.
-        input_schema: JSON Schema for the tool's arguments.
+    providers so a single ``ToolSpec`` can be passed to any backend's
+    ``tools=[]`` parameter after trivial adaptation.
     """
 
     name: str

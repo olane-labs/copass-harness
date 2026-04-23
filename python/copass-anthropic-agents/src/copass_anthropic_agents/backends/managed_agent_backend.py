@@ -41,24 +41,24 @@ import logging
 from hashlib import sha256
 from typing import TYPE_CHECKING, Any, AsyncIterator, List, Optional, Union
 
-from copass_anthropic_agents.backends.base_backend import (
+from copass_core_agents.backends.base_backend import (
     AgentBackend,
     AgentRunResult,
 )
-from copass_anthropic_agents.events import (
+from copass_core_agents.events import (
     AgentEvent,
     AgentFinish,
     AgentTextDelta,
     AgentToolCall,
     AgentToolResult,
 )
-from copass_anthropic_agents.invocation_context import AgentInvocationContext
-from copass_anthropic_agents.tool_registry import AgentToolRegistry
+from copass_core_agents.invocation_context import AgentInvocationContext
+from copass_core_agents.tool_registry import AgentToolRegistry
 
 if TYPE_CHECKING:
     from anthropic import AsyncAnthropic
 
-    from copass_anthropic_agents.base_agent import BaseAgent
+    from copass_core_agents.base_agent import BaseAgent
 
 
 logger = logging.getLogger(__name__)

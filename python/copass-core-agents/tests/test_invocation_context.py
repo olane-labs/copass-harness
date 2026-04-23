@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from copass_anthropic_agents import AgentInvocationContext, AgentScope
+from copass_core_agents import AgentInvocationContext, AgentScope
 
 
 def test_user_id_property_delegates_to_scope() -> None:

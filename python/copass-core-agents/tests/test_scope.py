@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from copass_anthropic_agents import AgentScope
+from copass_core_agents import AgentScope
 
 
 def test_requires_non_empty_user_id() -> None:
