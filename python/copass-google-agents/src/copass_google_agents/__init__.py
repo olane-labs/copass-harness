@@ -63,6 +63,11 @@ from copass_google_agents.backends.google_agent_backend import (
     SESSION_ID_HANDLE,
     GoogleAgentBackend,
 )
+from copass_context_agents import (
+    CopassTurnRecorder,
+    copass_ingest_tool,
+    copass_retrieval_tools,
+)
 from copass_google_agents.google_agent import DEFAULT_MODEL, CopassGoogleAgent
 
 __version__ = "0.1.0"
@@ -76,6 +81,10 @@ __all__ = [
     "DEFAULT_LOCATION",
     "DISPATCH_TOOL_NAME",
     "SESSION_ID_HANDLE",
+    # Copass context-engineering primitives
+    "copass_retrieval_tools",
+    "copass_ingest_tool",
+    "CopassTurnRecorder",
     # Re-exported from copass_core_agents
     "BaseAgent",
     "AgentScope",

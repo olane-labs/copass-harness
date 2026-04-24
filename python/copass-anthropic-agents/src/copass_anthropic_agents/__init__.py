@@ -63,6 +63,15 @@ from copass_anthropic_agents.backends.managed_agent_backend import (
 )
 from copass_anthropic_agents.managed_agent import DEFAULT_MODEL, CopassManagedAgent
 
+# Context-engineering primitives moved to the shared copass-context-agents
+# package. Re-exported here so existing ``from copass_anthropic_agents
+# import copass_retrieval_tools, ...`` imports keep working.
+from copass_context_agents import (
+    CopassTurnRecorder,
+    copass_ingest_tool,
+    copass_retrieval_tools,
+)
+
 __version__ = "0.1.0"
 
 __all__ = [
@@ -73,6 +82,10 @@ __all__ = [
     "ManagedAgentBackend",
     "DEFAULT_ENVIRONMENT_CONFIG",
     "SESSION_ID_HANDLE",
+    # Copass context-engineering primitives
+    "copass_retrieval_tools",
+    "copass_ingest_tool",
+    "CopassTurnRecorder",
     # Re-exported from copass_core_agents
     "BaseAgent",
     "AgentScope",

@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "copass-google-agents"
-version = "0.4.0"
-description = "Copass agent primitives for Google Vertex AI Agent Engine (ADK)"
+name = "copass-context-agents"
+version = "0.1.0"
+description = "Copass context-engineering primitives (retrieval tools, ingest tool, Context Window turn recorder) for copass-core-agents"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Olane Inc." }]
@@ -13,11 +13,10 @@ requires-python = ">=3.10"
 keywords = [
     "copass",
     "knowledge-graph",
-    "google",
-    "vertex-ai",
-    "agent-engine",
-    "adk",
     "agents",
+    "context-window",
+    "retrieval",
+    "ingest",
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
@@ -27,9 +26,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "google-cloud-aiplatform[agent_engines,adk]>=1.148.1",
+    "copass-core>=0.1.0",
     "copass-core-agents>=0.1.0",
-    "copass-context-agents>=0.1.0",
+    "copass-config>=0.1.0",
 ]
 
 [project.optional-dependencies]
@@ -45,17 +44,8 @@ Homepage = "https://github.com/olane-labs/copass-harness"
 Repository = "https://github.com/olane-labs/copass-harness.git"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/copass_google_agents"]
+packages = ["src/copass_context_agents"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-
-[tool.ruff]
-line-length = 100
-target-version = "py310"
-
-[tool.mypy]
-python_version = "3.10"
-strict = true
-packages = ["copass_google_agents"]

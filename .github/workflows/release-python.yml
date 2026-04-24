@@ -30,6 +30,7 @@ on:
         type: choice
         options:
           - copass-core-agents
+          - copass-context-agents
           - copass-anthropic-agents
           - copass-google-agents
           - both
@@ -96,17 +97,77 @@ jobs:
           echo "Dry run — built but skipped publish."
           ls -la dist/
 
+  release-context:
+    name: Release copass-context-agents
+    runs-on: ubuntu-latest
+    needs: [release-core]
+    # Same pattern as release-anthropic/release-google below: run when
+    # requested AND the upstream job either succeeded OR was skipped
+    # (user asked for this package alone).
+    if: >-
+      always()
+      && (inputs.package == 'copass-context-agents' || inputs.package == 'all')
+      && (needs.release-core.result == 'success' || needs.release-core.result == 'skipped')
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: python/copass-context-agents
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tooling
+        run: pip install build
+
+      - name: Install copass-core-agents (from this checkout, for test)
+        run: pip install -e ./python/copass-core-agents
+        working-directory: .
+
+      - name: Install + test
+        run: |
+          pip install -e ".[dev]"
+          pytest -q
+
+      - name: Show version
+        id: version
+        run: |
+          v=$(python -c 'import tomllib; print(tomllib.loads(open("pyproject.toml","rb").read().decode())["project"]["version"])')
+          echo "value=$v" >> "$GITHUB_OUTPUT"
+          echo "Releasing copass-context-agents $v (mode=${{ inputs.release_mode }})"
+
+      - name: Build (sdist + wheel)
+        run: python -m build
+
+      - name: Publish to PyPI
+        if: ${{ inputs.release_mode == 'stable' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/copass-context-agents/dist/
+
+      - name: Dry-run summary
+        if: ${{ inputs.release_mode == 'dry-run' }}
+        run: |
+          echo "Dry run — built but skipped publish."
+          ls -la dist/
+
   release-anthropic:
     name: Release copass-anthropic-agents
     runs-on: ubuntu-latest
-    needs: [release-core]
-    # Run when (a) the user asked for this package and (b) the core
-    # job either succeeded OR was skipped (i.e., user asked for
+    needs: [release-core, release-context]
+    # Run when (a) the user asked for this package and (b) both
+    # upstream jobs either succeeded OR were skipped (user asked for
     # anthropic only). `always()` lets us inspect `needs.*.result`.
     if: >-
       always()
       && (inputs.package == 'copass-anthropic-agents' || inputs.package == 'both' || inputs.package == 'all')
       && (needs.release-core.result == 'success' || needs.release-core.result == 'skipped')
+      && (needs.release-context.result == 'success' || needs.release-context.result == 'skipped')
     environment: pypi
     permissions:
       id-token: write
@@ -123,6 +184,9 @@ jobs:
 
       - name: Install copass-core-agents (from this checkout, for test)
         run: pip install -e ./python/copass-core-agents
+
+      - name: Install copass-context-agents (from this checkout, for test)
+        run: pip install -e ./python/copass-context-agents
 
       - name: Install + test
         working-directory: python/copass-anthropic-agents
@@ -158,13 +222,15 @@ jobs:
   release-google:
     name: Release copass-google-agents
     runs-on: ubuntu-latest
-    needs: [release-core]
-    # Mirrors release-anthropic: run when (a) the user asked for this
-    # package and (b) the core job either succeeded OR was skipped.
+    needs: [release-core, release-context]
+    # Mirrors release-anthropic: run when (a) the user asked for
+    # this package and (b) both upstream jobs either succeeded OR
+    # were skipped.
     if: >-
       always()
       && (inputs.package == 'copass-google-agents' || inputs.package == 'all')
       && (needs.release-core.result == 'success' || needs.release-core.result == 'skipped')
+      && (needs.release-context.result == 'success' || needs.release-context.result == 'skipped')
     environment: pypi
     permissions:
       id-token: write
@@ -181,6 +247,9 @@ jobs:
 
       - name: Install copass-core-agents (from this checkout, for test)
         run: pip install -e ./python/copass-core-agents
+
+      - name: Install copass-context-agents (from this checkout, for test)
+        run: pip install -e ./python/copass-context-agents
 
       - name: Install + test
         working-directory: python/copass-google-agents
