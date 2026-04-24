@@ -12,6 +12,8 @@ export type {
   AgentToolResult,
   AgentFinish,
   AgentErrorEvent,
+  AgentUsage,
+  CostBreakdownMicrocents,
 } from './events.js';
 export { iterateSseFrames, frameToAgentEvent } from './sse.js';
 export type { RawSseFrame } from './sse.js';
