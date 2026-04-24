@@ -127,10 +127,36 @@ def test_create_payload_custom_dispatch_path_included() -> None:
     assert env["COPASS_DISPATCH_PATH"] == "/api/v2/dispatch"
 
 
+def _unwrap_agent(adk_app):
+    """Reach the inner ``google.adk.Agent`` through the ``AdkApp`` wrapper.
+
+    ``deploy_adk_agent`` wraps the raw Agent in ``vertexai.agent_engines
+    .AdkApp`` before handing it to ``agent_engines.create``. Different
+    SDK versions expose the inner agent under ``.agent`` or ``._agent``;
+    probe both to stay forward-compatible.
+    """
+    raw = getattr(adk_app, "agent", None)
+    if raw is None:
+        raw = getattr(adk_app, "_agent", None)
+    if raw is None:
+        # Current vertexai build stashes the Agent in a private
+        # ``_tmpl_attrs`` dict under the ``agent`` key. Use this as a
+        # last resort so tests don't lock us to one SDK minor version.
+        tmpl = getattr(adk_app, "_tmpl_attrs", None)
+        if isinstance(tmpl, dict):
+            raw = tmpl.get("agent")
+    assert raw is not None, (
+        "expected AdkApp to expose the wrapped Agent via .agent, ._agent, "
+        "or ._tmpl_attrs['agent']"
+    )
+    return raw
+
+
 def test_created_agent_has_copass_dispatch_tool() -> None:
     fake_client = _FakeVertexClient()
     deploy_adk_agent(**_base_kwargs(vertex_client=fake_client))
-    agent = fake_client.agent_engines.created[0]["agent"]
+    adk_app = fake_client.agent_engines.created[0]["agent"]
+    agent = _unwrap_agent(adk_app)
     # ADK Agent stores tools under .tools — verify copass_dispatch is
     # bound. The function object identity is preserved because we
     # pass it by reference from the proxy module.
@@ -150,7 +176,8 @@ def test_extra_tools_appended_after_dispatch_proxy() -> None:
             extra_tools=[my_extra_tool],
         )
     )
-    agent = fake_client.agent_engines.created[0]["agent"]
+    adk_app = fake_client.agent_engines.created[0]["agent"]
+    agent = _unwrap_agent(adk_app)
     assert agent.tools[0] is copass_dispatch
     assert any(t is my_extra_tool for t in agent.tools[1:])
 
