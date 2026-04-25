@@ -2,7 +2,14 @@ import type { ChatMessage, SearchPreset } from '@copass/core';
 
 export interface ServerConfig {
   api_url: string;
-  api_key: string;
+  /**
+   * Required when the standalone `copass-mcp` bin builds its own
+   * `CopassClient` from this config (`bin.ts`). Optional for embedded
+   * use — when a host process (e.g. another MCP server) constructs the
+   * `CopassClient` itself and passes it into `buildServer({ client })`,
+   * the tool handlers never read this field.
+   */
+  api_key?: string;
   sandbox_id: string;
   project_id?: string;
   preset: SearchPreset;

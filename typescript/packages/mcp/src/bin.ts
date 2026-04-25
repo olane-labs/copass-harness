@@ -7,12 +7,16 @@ import { WindowRegistry } from './windows.js';
 
 async function main(): Promise<void> {
   const config = loadConfig();
+  // loadConfig() enforces api_key at runtime; the static type marks it
+  // optional so embedded callers (buildServer({ client })) don't have
+  // to pass one. The bin path always has it.
+  const apiKey = config.api_key!;
 
   const client = new CopassClient({
     apiUrl: config.api_url,
-    auth: config.api_key.startsWith('olk_')
-      ? { type: 'api-key', key: config.api_key }
-      : { type: 'bearer', token: config.api_key },
+    auth: apiKey.startsWith('olk_')
+      ? { type: 'api-key', key: apiKey }
+      : { type: 'bearer', token: apiKey },
   });
 
   const windows = new WindowRegistry();
