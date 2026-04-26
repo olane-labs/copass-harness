@@ -11,8 +11,10 @@ import type {
   CreateTriggerRequest,
   ListAgentRunsOptions,
   ListAgentsOptions,
+  ListTriggerComponentsOptions,
   ListTriggersOptions,
   TestFireRequest,
+  TriggerComponentListResponse,
   TriggerListResponse,
   UpdateAgentRequest,
   UpdateTriggerRequest,
@@ -207,6 +209,30 @@ export class AgentsResource extends BaseResource {
   async listTools(sandboxId: string): Promise<AgentToolCatalogResponse> {
     return this.get<AgentToolCatalogResponse>(
       `${agentsBase(sandboxId)}/tools`,
+    );
+  }
+
+  /**
+   * Search Pipedream's trigger-component registry. Use BEFORE
+   * `client.sources.register({ adapter_config: { pipedream_trigger:
+   * { component_id, configured_props } } })` to discover the right
+   * `component_id` and the `configurable_props` schema the user
+   * needs to fill in. Server-side at
+   * `GET /agents/triggers/components`.
+   */
+  async listTriggerComponents(
+    sandboxId: string,
+    options: ListTriggerComponentsOptions = {},
+  ): Promise<TriggerComponentListResponse> {
+    return this.get<TriggerComponentListResponse>(
+      `${agentsBase(sandboxId)}/triggers/components`,
+      {
+        query: {
+          app: options.app,
+          q: options.q,
+          limit: options.limit !== undefined ? String(options.limit) : undefined,
+        },
+      },
     );
   }
 }

@@ -86,6 +86,45 @@ export interface AgentToolCatalogResponse {
 }
 
 /**
+ * One Pipedream trigger component the user can deploy.
+ *
+ * Returned by `GET /agents/triggers/components` (server-side
+ * `frame_graph/copass_id/api/agents_crud.py:list_trigger_components`).
+ * The `component_id` is the slug to pass back as
+ * `adapter_config.pipedream_trigger.component_id` when calling
+ * `client.sources.register(...)`. `configurable_props` is the
+ * JSON-schema-like array Pipedream publishes — each entry's
+ * `name`/`type`/`label` tells UI wizards what to ask the user.
+ */
+export interface TriggerComponent {
+  component_id: string;
+  name: string;
+  description?: string | null;
+  version?: string | null;
+  /**
+   * Pipedream's prop schema. Each entry has at minimum `name` and
+   * `type` (e.g. 'app', 'string', 'integer'). Required for the
+   * Concierge / wizard layer to interview the user before issuing
+   * a deploy.
+   */
+  configurable_props: Array<Record<string, unknown>>;
+}
+
+export interface TriggerComponentListResponse {
+  components: TriggerComponent[];
+  count: number;
+}
+
+export interface ListTriggerComponentsOptions {
+  /** App slug to filter by, e.g. 'slack', 'gmail'. */
+  app?: string;
+  /** Free-text search (Pipedream's `q` parameter). */
+  q?: string;
+  /** Page size — server clamps to [1, 100]. Default 50. */
+  limit?: number;
+}
+
+/**
  * POST body for `/agents/{slug}/test`.
  *
  * `event_payload` is JSON-dumped into the agent's user-turn input —
