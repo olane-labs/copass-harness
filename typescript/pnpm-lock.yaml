@@ -36,22 +36,22 @@ importers:
         version: 3.0.71(zod@4.3.6)
       '@copass/ai-sdk':
         specifier: ^0.2.3
-        version: link:../packages/ai-sdk
+        version: 0.2.7(@copass/core@0.2.7)(ai@6.0.168(zod@4.3.6))(zod@4.3.6)
       '@copass/config':
         specifier: ^0.2.3
-        version: link:../packages/config
+        version: 0.2.3
       '@copass/core':
         specifier: ^0.2.3
-        version: link:../packages/core
+        version: 0.2.7
       '@copass/langchain':
         specifier: ^0.2.3
-        version: link:../packages/langchain
+        version: 0.2.7(@copass/core@0.2.7)(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@4.3.6))(ws@8.20.0))(@langchain/langgraph@1.2.9(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@4.3.6))(ws@8.20.0))(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6))(zod@4.3.6)
       '@copass/mastra':
         specifier: ^0.2.3
-        version: link:../packages/mastra
+        version: 0.2.7(@copass/core@0.2.7)(@mastra/core@1.26.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@4.3.6))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@4.3.6))(zod@4.3.6)
       '@copass/mcp':
         specifier: ^0.2.3
-        version: link:../packages/mcp
+        version: 0.2.7(@cfworker/json-schema@4.1.1)(@copass/core@0.2.7)
       '@hono/node-server':
         specifier: ^1.13.0
         version: 1.19.14(hono@4.12.14)
@@ -90,7 +90,7 @@ importers:
   packages/agent-router:
     devDependencies:
       '@copass/core':
-        specifier: ^0.2.8
+        specifier: ^0.3.1
         version: link:../core
       '@types/node':
         specifier: ^25.0.0
@@ -105,11 +105,11 @@ importers:
   packages/ai-sdk:
     dependencies:
       '@copass/config':
-        specifier: ^0.2.3
+        specifier: ^0.3.1
         version: link:../config
     devDependencies:
       '@copass/core':
-        specifier: ^0.2.8
+        specifier: ^0.3.1
         version: link:../core
       '@types/node':
         specifier: ^25.0.0
@@ -177,7 +177,7 @@ importers:
         version: 7.0.5
     devDependencies:
       '@copass/core':
-        specifier: ^0.2.8
+        specifier: ^0.3.1
         version: link:../core
       '@types/node':
         specifier: ^25.0.0
@@ -211,7 +211,7 @@ importers:
         version: 1.0.38
     devDependencies:
       '@copass/core':
-        specifier: ^0.2.8
+        specifier: ^0.3.1
         version: link:../core
       '@types/fs-extra':
         specifier: ^11.0.4
@@ -229,11 +229,11 @@ importers:
   packages/langchain:
     dependencies:
       '@copass/config':
-        specifier: ^0.2.3
+        specifier: ^0.3.1
         version: link:../config
     devDependencies:
       '@copass/core':
-        specifier: ^0.2.8
+        specifier: ^0.3.1
         version: link:../core
       '@langchain/core':
         specifier: ^1.1.0
@@ -257,11 +257,11 @@ importers:
   packages/mastra:
     dependencies:
       '@copass/config':
-        specifier: ^0.2.3
+        specifier: ^0.3.1
         version: link:../config
     devDependencies:
       '@copass/core':
-        specifier: ^0.2.8
+        specifier: ^0.3.1
         version: link:../core
       '@mastra/core':
         specifier: ^1.26.0
@@ -282,7 +282,7 @@ importers:
   packages/mcp:
     dependencies:
       '@copass/config':
-        specifier: ^0.2.3
+        specifier: ^0.3.1
         version: link:../config
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
@@ -292,7 +292,7 @@ importers:
         version: 4.3.6
     devDependencies:
       '@copass/core':
-        specifier: ^0.2.8
+        specifier: ^0.3.1
         version: link:../core
       '@types/node':
         specifier: ^25.0.0
@@ -491,6 +491,67 @@ packages:
       {
         integrity: sha512-I3Z+6SWUoaljh3TBzCnCxjlUyN8tA+NAk5L6m9IxvCf1BENQTePzPMis97CoN/iMW1St3WN+AWCCRp+TTBRiDg==,
       }
+
+  '@copass/ai-sdk@0.2.7':
+    resolution:
+      {
+        integrity: sha512-y4Zsurssw1gbFPMYbFCSIIs8rjZt4hRpAYKI8petTvcKavRaFin3heGJE3joXPc9hXWARe4NAn+0IjEdabSHwA==,
+      }
+    engines: { node: '>=18.0.0' }
+    peerDependencies:
+      '@copass/core': ^0.2.0
+      ai: '>=5.0.0'
+      zod: '>=3.23.0'
+
+  '@copass/config@0.2.3':
+    resolution:
+      {
+        integrity: sha512-K9AjBkGg0fXzqTMaL7Xbab/yq4A7bAIGyvILoty/Mhhu9S/DabmXnBz58XcU5ANXOUhiF/1xSpMiiHPc8+6Ang==,
+      }
+    engines: { node: '>=18.0.0' }
+
+  '@copass/core@0.2.7':
+    resolution:
+      {
+        integrity: sha512-/y8/qAARerUoibrRpJe2jHA0L7wnK6d8feHkE3rw98sYDo9ZKg7DJwWZPuUT2L2zC+eDENBzbzb2I0kiJjQuMg==,
+      }
+    engines: { node: '>=18.0.0' }
+
+  '@copass/langchain@0.2.7':
+    resolution:
+      {
+        integrity: sha512-tFXLi60tPtjPJjV5R4ChvZMTZzAy3PdEiI/EKsXYWtajcA7iZQhnYykbVVmAHKxBYzVahpf/hh2XOXEQZjDH8A==,
+      }
+    engines: { node: '>=18.0.0' }
+    peerDependencies:
+      '@copass/core': ^0.2.0
+      '@langchain/core': '>=1.0.0'
+      '@langchain/langgraph': '>=1.0.0'
+      zod: '>=3.23.0'
+    peerDependenciesMeta:
+      '@langchain/langgraph':
+        optional: true
+
+  '@copass/mastra@0.2.7':
+    resolution:
+      {
+        integrity: sha512-lByNjfjKP/QjoqFJXj04eOZtySJX/vIAREeawt/AylaYqtD/oxn0oEXtjIuojl6ZoP/80YgKTZVExDqp0kGAOA==,
+      }
+    engines: { node: '>=18.0.0' }
+    peerDependencies:
+      '@copass/core': ^0.2.0
+      '@mastra/core': '>=1.0.0'
+      zod: '>=3.23.0'
+
+  '@copass/mcp@0.2.7':
+    resolution:
+      {
+        integrity: sha512-06HKv4t1npDku17WdJ0rbG9Cg57ZzrGDS5G5n3tvhAybFhx3EfLOHc4bY0zHqDL1TBcElkbyjFmtWET9IOUmKw==,
+      }
+    engines: { node: '>=18.0.0' }
+    hasBin: true
+    peerDependencies:
+      '@copass/core': ^0.2.0
 
   '@cspotcode/source-map-support@0.8.1':
     resolution:
@@ -10411,6 +10472,45 @@ snapshots:
     dependencies:
       '@chainsafe/is-ip': 2.1.0
 
+  '@copass/ai-sdk@0.2.7(@copass/core@0.2.7)(ai@6.0.168(zod@4.3.6))(zod@4.3.6)':
+    dependencies:
+      '@copass/config': 0.2.3
+      '@copass/core': 0.2.7
+      ai: 6.0.168(zod@4.3.6)
+      zod: 4.3.6
+
+  '@copass/config@0.2.3': {}
+
+  '@copass/core@0.2.7':
+    dependencies:
+      zod: 4.3.6
+
+  '@copass/langchain@0.2.7(@copass/core@0.2.7)(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@4.3.6))(ws@8.20.0))(@langchain/langgraph@1.2.9(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@4.3.6))(ws@8.20.0))(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6))(zod@4.3.6)':
+    dependencies:
+      '@copass/config': 0.2.3
+      '@copass/core': 0.2.7
+      '@langchain/core': 1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@4.3.6))(ws@8.20.0)
+      zod: 4.3.6
+    optionalDependencies:
+      '@langchain/langgraph': 1.2.9(@langchain/core@1.1.40(@opentelemetry/api@1.9.0)(openai@5.23.2(ws@8.20.0)(zod@4.3.6))(ws@8.20.0))(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6)
+
+  '@copass/mastra@0.2.7(@copass/core@0.2.7)(@mastra/core@1.26.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@4.3.6))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@4.3.6))(zod@4.3.6)':
+    dependencies:
+      '@copass/config': 0.2.3
+      '@copass/core': 0.2.7
+      '@mastra/core': 1.26.0(@cfworker/json-schema@4.1.1)(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6))(@standard-community/standard-openapi@0.2.9(@standard-community/standard-json@0.3.5(@standard-schema/spec@1.1.0)(@types/json-schema@7.0.15)(quansync@0.2.11)(zod-to-json-schema@3.25.2(zod@4.3.6))(zod@4.3.6))(@standard-schema/spec@1.1.0)(openapi-types@12.1.3)(zod@4.3.6))(@types/json-schema@7.0.15)(openapi-types@12.1.3)(zod@4.3.6)
+      zod: 4.3.6
+
+  '@copass/mcp@0.2.7(@cfworker/json-schema@4.1.1)(@copass/core@0.2.7)':
+    dependencies:
+      '@copass/config': 0.2.3
+      '@copass/core': 0.2.7
+      '@modelcontextprotocol/sdk': 1.29.0(@cfworker/json-schema@4.1.1)(zod@4.3.6)
+      zod: 4.3.6
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - supports-color
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -14283,7 +14383,7 @@ snapshots:
       jsonwebtoken: 9.0.3
       load-esm: 1.0.3
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.15.0(debug@4.4.3))
+      retry-axios: 2.6.0(axios@1.15.0)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -16268,7 +16368,7 @@ snapshots:
 
   retimeable-signal@1.0.1: {}
 
-  retry-axios@2.6.0(axios@1.15.0(debug@4.4.3)):
+  retry-axios@2.6.0(axios@1.15.0):
     dependencies:
       axios: 1.15.0(debug@4.4.3)
 
