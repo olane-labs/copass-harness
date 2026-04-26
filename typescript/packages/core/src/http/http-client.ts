@@ -158,6 +158,93 @@ export class HttpClient {
     }, this.retryConfig);
   }
 
+  /**
+   * Open a streaming request — returns the raw `Response` so the
+   * caller can consume `response.body` directly (typically with
+   * `parseSSE` from `util/sse.ts`).
+   *
+   * Differences from `request()`:
+   *   * **No retry**. Mid-stream retries would replay turns server-
+   *     side and confuse the consumer; if the connection drops, the
+   *     caller decides whether to reopen with a fresh `session_id`.
+   *   * **No JSON parsing** of the response body — the caller owns it.
+   *   * **`Accept: text/event-stream`** is set so the server picks
+   *     the SSE content negotiation branch where it has one.
+   *   * The `4xx`/`5xx` body is consumed for the error message
+   *     (matches `request()`'s behavior).
+   */
+  async streamRequest(
+    path: string,
+    options: RequestOptions = {},
+  ): Promise<Response> {
+    const { method = 'POST', body, rawBody, query, headers: extraHeaders } = options;
+
+    const session = await this.authProvider.getSession();
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${session.accessToken}`,
+      Accept: 'text/event-stream',
+      ...extraHeaders,
+    };
+    if (rawBody === undefined && !headers['Content-Type'] && !headers['content-type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (session.sessionToken) {
+      headers['X-Encryption-Token'] = session.sessionToken;
+    }
+
+    let requestBody: string | Uint8Array | ArrayBuffer | Blob | undefined;
+    if (rawBody !== undefined) {
+      requestBody = rawBody;
+    } else if (body !== undefined) {
+      requestBody = JSON.stringify(body);
+    }
+
+    let url = `${this.apiUrl}${path}`;
+    if (query) {
+      const params = new URLSearchParams();
+      for (const [k, v] of Object.entries(query)) {
+        if (v !== undefined) params.set(k, v);
+      }
+      const qs = params.toString();
+      if (qs) url += `?${qs}`;
+    }
+
+    const ctxBodyForMiddleware =
+      typeof requestBody === 'string' || requestBody === undefined ? requestBody : '<binary>';
+    const ctx: RequestContext = { method, path, url, headers, body: ctxBodyForMiddleware };
+    for (const mw of this.onRequest) {
+      await mw(ctx);
+    }
+
+    const start = Date.now();
+    const response = await fetch(ctx.url, {
+      method: ctx.method,
+      headers: ctx.headers,
+      body: (requestBody ?? undefined) as BodyInit | undefined,
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      let errorBody: unknown;
+      try {
+        errorBody = JSON.parse(text);
+      } catch {
+        errorBody = text;
+      }
+      throw new CopassApiError(
+        `Stream request failed: ${response.status} ${response.statusText}`,
+        response.status,
+        errorBody,
+        path,
+      );
+    }
+
+    for (const mw of this.onResponse) {
+      await mw({ request: ctx, status: response.status, durationMs: Date.now() - start });
+    }
+    return response;
+  }
+
   async uploadFile(
     path: string,
     file: Blob,

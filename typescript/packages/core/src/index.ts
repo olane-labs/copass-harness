@@ -109,6 +109,19 @@ export type {
   UpdateTriggerRequest,
 } from './types/agents.js';
 
+// Copass Concierge (per-user platform agent)
+export { ConciergeResource } from './resources/concierge.js';
+export type {
+  ConciergeChatRequest,
+  ConciergeEvent,
+  ConciergeTestRequest,
+  ConciergeTestResponse,
+} from './types/concierge.js';
+
+// SSE utilities
+export { parseSSE } from './util/sse.js';
+export type { SSEEvent } from './util/sse.js';
+
 // Config
 export {
   ProjectConfigSchema,

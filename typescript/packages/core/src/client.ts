@@ -17,6 +17,7 @@ import { VaultResource } from './resources/vault.js';
 import { IngestResource } from './resources/ingest.js';
 import { IntegrationsResource } from './resources/integrations.js';
 import { AgentsResource } from './resources/agents.js';
+import { ConciergeResource } from './resources/concierge.js';
 import { ContextWindowResource } from './context-window/index.js';
 import type { RequestMiddleware, ResponseMiddleware } from './http/http-client.js';
 import type { RetryConfig } from './types/common.js';
@@ -82,6 +83,12 @@ export class CopassClient {
   readonly integrations: IntegrationsResource;
   /** Reactive Agents — persisted agent CRUD + triggers + runs + test-fire. */
   readonly agents: AgentsResource;
+  /**
+   * Copass Concierge — per-user platform agent for managing your
+   * Copass setup conversationally. `test()` for one-shot runs;
+   * `chat()` for multi-turn streaming.
+   */
+  readonly concierge: ConciergeResource;
   readonly contextWindow: ContextWindowResource;
 
   constructor(options: CopassClientOptions) {
@@ -107,6 +114,7 @@ export class CopassClient {
     this.usage = new UsageResource(http);
     this.integrations = new IntegrationsResource(http);
     this.agents = new AgentsResource(http);
+    this.concierge = new ConciergeResource(http);
     // Depends on `this.sources` for register/retrieve — initialize last.
     this.contextWindow = new ContextWindowResource(this);
   }
