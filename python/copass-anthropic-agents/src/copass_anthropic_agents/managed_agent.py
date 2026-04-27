@@ -145,6 +145,7 @@ class CopassManagedAgent(BaseAgent):
         model: str = DEFAULT_MODEL,
         anthropic_api_key: Optional[str] = None,
         anthropic_client: "Optional[AsyncAnthropic]" = None,
+        backend: Optional[ManagedAgentBackend] = None,
         tools: Optional[AgentToolRegistry] = None,
         tool_resolver: "Optional[AgentToolResolver]" = None,
         on_conflict: ToolConflictPolicy = "dynamic_wins",
@@ -156,10 +157,25 @@ class CopassManagedAgent(BaseAgent):
         author: Optional[str] = None,
         project_id: Optional[str] = None,
     ) -> None:
-        backend = ManagedAgentBackend(
-            client=anthropic_client,
-            api_key=anthropic_api_key,
-        )
+        # Caller can either let us build the backend (default) or pass
+        # one in — useful when they need backend-level config that
+        # isn't surfaced as a constructor arg here (e.g.
+        # ``include_builtin_toolset=True`` for hosted web_search). The
+        # two paths are exclusive: passing both ``backend`` and an
+        # api_key/client is almost always a config bug, so we reject
+        # rather than silently letting one win.
+        if backend is not None and (anthropic_api_key or anthropic_client):
+            raise ValueError(
+                "CopassManagedAgent: pass EITHER `backend` OR "
+                "`anthropic_api_key` / `anthropic_client` — not both. "
+                "When supplying your own backend, configure its client "
+                "there."
+            )
+        if backend is None:
+            backend = ManagedAgentBackend(
+                client=anthropic_client,
+                api_key=anthropic_api_key,
+            )
         super().__init__(
             identity=identity,
             model=model,
