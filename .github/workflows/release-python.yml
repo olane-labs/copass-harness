@@ -102,11 +102,13 @@ jobs:
           fi
           echo "version=$v" >> "$GITHUB_OUTPUT"
 
-          # Did VERSION change in the pushed commit? If git diff returns
-          # any line for python/VERSION, the file moved. Newly-added
-          # files also surface here (treated as "changed" → release).
-          # ``git diff`` exits 0 even when no diff — guard with grep.
-          if git diff HEAD~1 HEAD -- python/VERSION | grep -q '^[+-]'; then
+          # Did VERSION change in the pushed commit? Match only actual
+          # +/- content lines (``^[+-][^+-]``) — the naive ``^[+-]``
+          # also matches the ``--- a/...`` / ``+++ b/...`` diff headers
+          # and would always return true on a metadata-only change.
+          # Newly-added files surface as ``+0.4.1`` lines (correctly
+          # detected as a release-worthy change).
+          if git diff HEAD~1 HEAD -- python/VERSION | grep -q '^[+-][^+-]'; then
             echo "should_release=true" >> "$GITHUB_OUTPUT"
             echo "::notice::Lockstep release of all Python packages at $v"
           else
