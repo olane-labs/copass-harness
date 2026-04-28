@@ -207,7 +207,8 @@ jobs:
         working-directory: python/${{ matrix.package }}
         run: |
           pip install -e ".[dev]"
-          pytest -q
+          # Tolerate exit 5 (no tests collected) — some packages ship without tests.
+          pytest -q || [ $? -eq 5 ]
 
       - name: Build (sdist + wheel)
         working-directory: python/${{ matrix.package }}
@@ -255,7 +256,8 @@ jobs:
       - name: Install + test
         run: |
           pip install -e ".[dev]"
-          pytest -q
+          # Tolerate exit 5 (no tests collected) — some packages ship without tests.
+          pytest -q || [ $? -eq 5 ]
 
       - name: Show version
         id: version
@@ -312,7 +314,8 @@ jobs:
       - name: Install + test
         run: |
           pip install -e ".[dev]"
-          pytest -q
+          # Tolerate exit 5 (no tests collected) — some packages ship without tests.
+          pytest -q || [ $? -eq 5 ]
 
       - name: Show version
         id: version
@@ -372,7 +375,8 @@ jobs:
       - name: Install + test
         run: |
           pip install -e ".[dev]"
-          pytest -q
+          # Tolerate exit 5 (no tests collected) — some packages ship without tests.
+          pytest -q || [ $? -eq 5 ]
 
       - name: Show version
         id: version
@@ -434,7 +438,8 @@ jobs:
         working-directory: python/copass-anthropic-agents
         run: |
           pip install -e ".[dev]"
-          pytest -q
+          # Tolerate exit 5 (no tests collected) — some packages ship without tests.
+          pytest -q || [ $? -eq 5 ]
 
       - name: Show version
         id: version
@@ -498,7 +503,8 @@ jobs:
         working-directory: python/copass-google-agents
         run: |
           pip install -e ".[dev]"
-          pytest -q
+          # Tolerate exit 5 (no tests collected) — some packages ship without tests.
+          pytest -q || [ $? -eq 5 ]
 
       - name: Show version
         id: version
