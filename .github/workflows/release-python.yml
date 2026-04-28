@@ -1,12 +1,22 @@
 name: release-python
 
-# Manual-dispatch release mirroring `release-typescript.yml`.
+# Two release paths share this workflow file (and therefore share PyPI
+# Trusted-Publisher entries — keyed on workflow_filename + environment):
 #
-# Version bumps are NOT automated — edit `pyproject.toml::version` in
-# the target package(s) BEFORE running this workflow, commit, merge to
-# main, then trigger from the Actions tab. The workflow builds sdist +
-# wheel, runs the tests, and publishes via PyPI Trusted Publishing
-# (OIDC — no long-lived PyPI tokens).
+#  1. Manual single-package release via ``workflow_dispatch``. Version
+#     bumps are user-driven — edit ``pyproject.toml::version`` in the
+#     target package, commit, merge, then trigger from the Actions tab.
+#     The downstream ``release-*`` jobs handle this path.
+#
+#  2. Lockstep release on push to ``production``. Single source of
+#     truth is ``python/VERSION``. The ``release-production`` matrix
+#     job stamps that version into all 5 ``pyproject.toml`` files (and
+#     ``__version__`` constants) at build time, then publishes every
+#     package at the same version in parallel. Skipped silently when
+#     ``python/VERSION`` did not change in the pushed commit — pushing
+#     a typo fix to ``production`` does not republish anything.
+#
+# Both paths use PyPI Trusted Publishing (OIDC — no long-lived tokens).
 #
 # Prerequisites (done once per package on pypi.org):
 #   1. Reserve the package name.
@@ -21,6 +31,12 @@ name: release-python
 # add approvals or branch gates if desired.
 
 on:
+  push:
+    branches: [production]
+    paths:
+      - 'python/VERSION'
+      - 'python/**'
+      - '.github/workflows/release-python.yml'
   workflow_dispatch:
     inputs:
       package:
@@ -50,6 +66,162 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ─── Lockstep production release ─────────────────────────────────
+  #
+  # Fires on push to ``production`` when ``python/VERSION`` changed in
+  # the pushed commit. Reads the canonical version from that file,
+  # stamps it into every package's ``pyproject.toml`` + ``__version__``
+  # at build time, and publishes all 5 in parallel.
+
+  check-lockstep-version:
+    name: Check python/VERSION
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/production' }}
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+      should_release: ${{ steps.read.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Need the parent commit to diff python/VERSION against.
+          fetch-depth: 2
+
+      - id: read
+        run: |
+          set -euo pipefail
+          if [ ! -f python/VERSION ]; then
+            echo "::warning::python/VERSION missing — skipping lockstep release"
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          v=$(tr -d '[:space:]' < python/VERSION)
+          if [ -z "$v" ]; then
+            echo "::error::python/VERSION is empty"
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+          # Did VERSION change in the pushed commit? If git diff returns
+          # any line for python/VERSION, the file moved. Newly-added
+          # files also surface here (treated as "changed" → release).
+          # ``git diff`` exits 0 even when no diff — guard with grep.
+          if git diff HEAD~1 HEAD -- python/VERSION | grep -q '^[+-]'; then
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Lockstep release of all Python packages at $v"
+          else
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::python/VERSION unchanged ($v) — skipping release"
+          fi
+
+  release-production:
+    name: "Release ${{ matrix.package }} @ ${{ needs.check-lockstep-version.outputs.version }}"
+    needs: [check-lockstep-version]
+    if: needs.check-lockstep-version.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      # Don't fail-fast — one package's flake shouldn't block the others.
+      # Concurrency=2 to avoid rate-limiting PyPI / runner pools while
+      # still releasing in parallel.
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        package:
+          - copass-core
+          - copass-core-agents
+          - copass-context-agents
+          - copass-anthropic-agents
+          - copass-google-agents
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tooling
+        run: pip install build
+
+      - name: Stamp version into pyproject.toml + __version__
+        env:
+          NEW_VERSION: ${{ needs.check-lockstep-version.outputs.version }}
+          PKG: ${{ matrix.package }}
+        run: |
+          python3 <<'PY'
+          import os, re, pathlib
+          v = os.environ["NEW_VERSION"]
+          pkg_dir = pathlib.Path("python") / os.environ["PKG"]
+
+          # 1. pyproject.toml — stamp the FIRST top-level ``version = "..."``
+          #    line under [project]. We don't fully parse TOML here on
+          #    purpose: the regex is constrained enough to be safe and
+          #    avoids a runtime dep on tomli-w.
+          pp = pkg_dir / "pyproject.toml"
+          text = pp.read_text()
+          new = re.sub(
+              r'^version\s*=\s*"[^"]*"',
+              f'version = "{v}"',
+              text,
+              count=1,
+              flags=re.M,
+          )
+          if new == text:
+              raise SystemExit(f"::error::no version line found in {pp}")
+          pp.write_text(new)
+          print(f"Stamped {pp} -> {v}")
+
+          # 2. ``__version__`` constant in any src/**/__init__.py.
+          for init in pkg_dir.glob("src/**/__init__.py"):
+              t = init.read_text()
+              if "__version__" not in t:
+                  continue
+              t2 = re.sub(
+                  r'__version__\s*=\s*"[^"]*"',
+                  f'__version__ = "{v}"',
+                  t,
+                  count=1,
+              )
+              if t2 != t:
+                  init.write_text(t2)
+                  print(f"Stamped {init} -> {v}")
+          PY
+
+      - name: Install local sibling packages (so tests resolve from checkout)
+        run: |
+          # Install the SDK + agents packages from local checkout so this
+          # package's tests run against the freshly-stamped sources, not
+          # the previous PyPI release.
+          for sibling in copass-core copass-core-agents copass-context-agents; do
+            if [ "$sibling" != "${{ matrix.package }}" ] && [ -f "python/$sibling/pyproject.toml" ]; then
+              pip install -e "python/$sibling" || true
+            fi
+          done
+
+      - name: Install + test
+        working-directory: python/${{ matrix.package }}
+        run: |
+          pip install -e ".[dev]"
+          pytest -q
+
+      - name: Build (sdist + wheel)
+        working-directory: python/${{ matrix.package }}
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/${{ matrix.package }}/dist/
+
+  # ─── Manual single-package dispatch jobs ─────────────────────────
+  #
+  # Each of the four jobs below runs ONLY on ``workflow_dispatch`` —
+  # the ``inputs.package`` check evaluates to false on push events,
+  # so they're skipped during a lockstep release.
+
   release-copass-core:
     # The Python SDK that mirrors `@copass/core`. Lands BEFORE the
     # *-agents jobs so when ``all`` is selected, downstream packages
@@ -58,7 +230,7 @@ jobs:
     # SDK rather than the previous PyPI release. When the user picks
     # only an *-agents package, this job is skipped — the agent jobs
     # then resolve ``copass-core`` from whatever's already on PyPI.
-    if: ${{ inputs.package == 'copass-core' || inputs.package == 'all' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.package == 'copass-core' || inputs.package == 'all') }}
     name: Release copass-core
     runs-on: ubuntu-latest
     environment: pypi
@@ -107,11 +279,13 @@ jobs:
 
   release-core:
     needs: [release-copass-core]
-    # Run when (a) the user asked for this package and (b) the upstream
-    # SDK job either succeeded OR was skipped (user asked for an
-    # *-agents package alone). ``always()`` lets us inspect needs.*.result.
+    # Run when (a) it's a manual dispatch, (b) the user asked for this
+    # package, and (c) the upstream SDK job either succeeded OR was
+    # skipped (user asked for an *-agents package alone).
+    # ``always()`` lets us inspect needs.*.result.
     if: >-
       always()
+      && github.event_name == 'workflow_dispatch'
       && (inputs.package == 'copass-core-agents' || inputs.package == 'both' || inputs.package == 'all')
       && (needs.release-copass-core.result == 'success' || needs.release-copass-core.result == 'skipped')
     name: Release copass-core-agents
@@ -164,11 +338,12 @@ jobs:
     name: Release copass-context-agents
     runs-on: ubuntu-latest
     needs: [release-core]
-    # Same pattern as release-anthropic/release-google below: run when
-    # requested AND the upstream job either succeeded OR was skipped
-    # (user asked for this package alone).
+    # Same pattern as release-anthropic/release-google below: dispatch-
+    # only, runs when requested AND the upstream job either succeeded
+    # OR was skipped (user asked for this package alone).
     if: >-
       always()
+      && github.event_name == 'workflow_dispatch'
       && (inputs.package == 'copass-context-agents' || inputs.package == 'all')
       && (needs.release-core.result == 'success' || needs.release-core.result == 'skipped')
     environment: pypi
@@ -223,11 +398,13 @@ jobs:
     name: Release copass-anthropic-agents
     runs-on: ubuntu-latest
     needs: [release-core, release-context]
-    # Run when (a) the user asked for this package and (b) both
-    # upstream jobs either succeeded OR were skipped (user asked for
-    # anthropic only). `always()` lets us inspect `needs.*.result`.
+    # Run when (a) it's a manual dispatch, (b) the user asked for this
+    # package, and (c) both upstream jobs either succeeded OR were
+    # skipped (user asked for anthropic only). `always()` lets us
+    # inspect `needs.*.result`.
     if: >-
       always()
+      && github.event_name == 'workflow_dispatch'
       && (inputs.package == 'copass-anthropic-agents' || inputs.package == 'both' || inputs.package == 'all')
       && (needs.release-core.result == 'success' || needs.release-core.result == 'skipped')
       && (needs.release-context.result == 'success' || needs.release-context.result == 'skipped')
@@ -286,11 +463,12 @@ jobs:
     name: Release copass-google-agents
     runs-on: ubuntu-latest
     needs: [release-core, release-context]
-    # Mirrors release-anthropic: run when (a) the user asked for
-    # this package and (b) both upstream jobs either succeeded OR
-    # were skipped.
+    # Mirrors release-anthropic: dispatch-only, runs when (a) the user
+    # asked for this package and (b) both upstream jobs either
+    # succeeded OR were skipped.
     if: >-
       always()
+      && github.event_name == 'workflow_dispatch'
       && (inputs.package == 'copass-google-agents' || inputs.package == 'all')
       && (needs.release-core.result == 'success' || needs.release-core.result == 'skipped')
       && (needs.release-context.result == 'success' || needs.release-context.result == 'skipped')
