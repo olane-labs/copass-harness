@@ -33,6 +33,7 @@ from copass_core.resources.sources import (
     DataSourceProvider,
     DataSourceStatus,
     SourcesResource,
+    UserMcpSourceResult,
 )
 from copass_core.resources.usage import UsageResource
 from copass_core.resources.users import UsersResource
@@ -58,6 +59,7 @@ __all__ = [
     "DataSourceIngestionMode",
     "DataSourceStatus",
     "DataSourceKind",
+    "UserMcpSourceResult",
     # Ingest
     "IngestResource",
     # Projects

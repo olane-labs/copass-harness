@@ -6,6 +6,9 @@ export type DataSourceProvider =
   | 'jira'
   | 'notion'
   | 'custom'
+  | 'pipedream'
+  | 'user_mcp'
+  | 'bigquery'
   | string;
 
 export type DataSourceIngestionMode = 'realtime' | 'polling' | 'batch' | 'manual';
@@ -87,4 +90,52 @@ export interface ListDataSourcesOptions {
 export interface DataSourceListResponse {
   sources: DataSource[];
   count: number;
+}
+
+/**
+ * Tenant-supplied MCP server registration payload.
+ *
+ * Backed by `POST /api/v1/storage/sandboxes/{sandboxId}/sources/user-mcp`.
+ * The `token` is vault-put server-side under `user_mcp/<id>/auth`; only
+ * the vault key reference lives on the row.
+ */
+export interface CreateUserMcpSourceRequest {
+  name: string;
+  /** User's MCP server URL. https only — http rejected except localhost. */
+  base_url: string;
+  /** `bearer` | `header_token` | `none`. */
+  auth_kind: 'bearer' | 'header_token' | 'none';
+  /** Required iff `auth_kind != 'none'`. Stored in vault, never echoed. */
+  token?: string;
+  /** Required iff `auth_kind === 'header_token'`. */
+  auth_header?: string;
+  /** Tool-name prefix (≤64 chars). Defaults to `data_source_id`. */
+  app_namespace?: string;
+  /** Per-source allowlist on top of the agent-level one. */
+  allowed_tools?: string[];
+  /** Tool calls to run on every pull. Empty = live-tools-only. */
+  ingest_tool_calls?: Array<Record<string, unknown>>;
+  /** Per-source tool-call rate cap. Default 60, max 600. */
+  rate_cap_per_minute?: number;
+  /** Per-source webhook firehose rate cap. Default 600, max 6000. */
+  webhook_rate_cap_per_minute?: number;
+}
+
+/**
+ * Result of a user_mcp lifecycle call.
+ *
+ * On success, `data_source_id` and `status` are populated. On
+ * health-check failure, `status === 'error'` and `health_error` carries
+ * a short reason. On validation failure (400), `error` and optional
+ * `detail` are populated and the HTTP layer raises before reaching
+ * here.
+ */
+export interface UserMcpSourceResult {
+  data_source_id?: string;
+  status?: DataSourceStatus;
+  name?: string;
+  ingestion_mode?: DataSourceIngestionMode;
+  health_error?: string;
+  error?: string;
+  detail?: string;
 }

@@ -38,6 +38,38 @@ class DataSource:
     created_at: Optional[str] = None
 
 
+@dataclass(frozen=True)
+class UserMcpSourceResult:
+    """Outcome of a ``user_mcp`` lifecycle call.
+
+    On success, ``data_source_id`` and ``status`` are populated. On
+    health-check failure, ``status == 'error'`` and ``health_error``
+    carries a short reason. Validation failures surface at the HTTP
+    layer (400) before reaching here; the dataclass shape matches the
+    server's ``UserMCPSourceResultResponse``.
+    """
+
+    data_source_id: Optional[str] = None
+    status: Optional[str] = None
+    name: Optional[str] = None
+    ingestion_mode: Optional[str] = None
+    health_error: Optional[str] = None
+    error: Optional[str] = None
+    detail: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "UserMcpSourceResult":
+        return cls(
+            data_source_id=d.get("data_source_id"),
+            status=d.get("status"),
+            name=d.get("name"),
+            ingestion_mode=d.get("ingestion_mode"),
+            health_error=d.get("health_error"),
+            error=d.get("error"),
+            detail=d.get("detail"),
+        )
+
+
 def _base(sandbox_id: str) -> str:
     return f"/api/v1/storage/sandboxes/{sandbox_id}/sources"
 
@@ -125,6 +157,92 @@ class SourcesResource(BaseResource):
     async def delete(self, sandbox_id: str, source_id: str) -> Dict[str, Any]:
         return await self._delete(f"{_base(sandbox_id)}/{source_id}")
 
+    # ─── user_mcp lifecycle ──────────────────────────────────────────
+    #
+    # Distinct from ``register`` because the secret-aware flow lives on
+    # the server (vault-put before row write, health check, namespace
+    # uniqueness, durability sequencing). Going through ``register``
+    # with ``provider='user_mcp'`` would store the bearer token
+    # plaintext on ``adapter_config`` — these methods route through
+    # ``POST /sources/user-mcp`` so the server runs the safe path.
+
+    async def register_user_mcp(
+        self,
+        sandbox_id: str,
+        *,
+        name: str,
+        base_url: str,
+        auth_kind: Literal["bearer", "header_token", "none"],
+        token: Optional[str] = None,
+        auth_header: Optional[str] = None,
+        app_namespace: Optional[str] = None,
+        allowed_tools: Optional[List[str]] = None,
+        ingest_tool_calls: Optional[List[Dict[str, Any]]] = None,
+        rate_cap_per_minute: Optional[int] = None,
+        webhook_rate_cap_per_minute: Optional[int] = None,
+    ) -> UserMcpSourceResult:
+        """Register a tenant-supplied MCP server as a ``user_mcp`` source.
+
+        ``token`` is vault-put server-side under ``user_mcp/<id>/auth``;
+        only the vault key reference lives on the row. A one-shot
+        ``tools/list`` health check runs before returning. On health
+        failure the source lands with ``status='error'`` and the caller
+        can retry via :meth:`test_user_mcp`. On success, status is
+        ``'active'``.
+        """
+        body: Dict[str, Any] = {
+            "name": name,
+            "base_url": base_url,
+            "auth_kind": auth_kind,
+        }
+        if token is not None:
+            body["token"] = token
+        if auth_header is not None:
+            body["auth_header"] = auth_header
+        if app_namespace is not None:
+            body["app_namespace"] = app_namespace
+        if allowed_tools is not None:
+            body["allowed_tools"] = allowed_tools
+        if ingest_tool_calls is not None:
+            body["ingest_tool_calls"] = ingest_tool_calls
+        if rate_cap_per_minute is not None:
+            body["rate_cap_per_minute"] = rate_cap_per_minute
+        if webhook_rate_cap_per_minute is not None:
+            body["webhook_rate_cap_per_minute"] = webhook_rate_cap_per_minute
+        result = await self._post(f"{_base(sandbox_id)}/user-mcp", body)
+        return UserMcpSourceResult.from_dict(result)
+
+    async def test_user_mcp(
+        self, sandbox_id: str, source_id: str,
+    ) -> UserMcpSourceResult:
+        """Re-run the health check on a ``user_mcp`` source.
+
+        Flips status to ``'active'`` on success or ``'error'`` on
+        failure. Use after fixing whatever made
+        :meth:`register_user_mcp` land in error state.
+        """
+        result = await self._post(
+            f"{_base(sandbox_id)}/{source_id}/user-mcp/test",
+        )
+        return UserMcpSourceResult.from_dict(result)
+
+    async def revoke_user_mcp(
+        self, sandbox_id: str, source_id: str,
+    ) -> UserMcpSourceResult:
+        """Disconnect a ``user_mcp`` source.
+
+        Deletes vault-stored secrets (auth + webhook signing if
+        present), sets status to ``'disconnected'`` (terminal), and
+        evicts both the agent-side tool-cap bucket and the receiver-
+        side webhook-cap bucket so revocation is observed within one
+        request. Reversible only by calling :meth:`register_user_mcp`
+        again.
+        """
+        result = await self._post(
+            f"{_base(sandbox_id)}/{source_id}/user-mcp/revoke",
+        )
+        return UserMcpSourceResult.from_dict(result)
+
     async def ingest(
         self,
         sandbox_id: str,
@@ -156,4 +274,5 @@ __all__ = [
     "DataSourceIngestionMode",
     "DataSourceStatus",
     "DataSourceKind",
+    "UserMcpSourceResult",
 ]

@@ -105,6 +105,62 @@ export class SourcesResource extends BaseResource {
   }
 
   /**
+   * Register a tenant-supplied MCP server as a `user_mcp` data source.
+   *
+   * Distinct from {@link register} because the secret-aware flow lives on
+   * the server (vault-put before row write, health check, namespace
+   * uniqueness, durability sequencing). Going through `register` with
+   * `provider: "user_mcp"` directly would store the bearer token plaintext
+   * on `adapter_config` — this method routes through
+   * `POST /sources/user-mcp` so the server runs the secret-aware lifecycle.
+   *
+   * The `token` is vault-put under `user_mcp/<id>/auth`; only the vault
+   * key reference lives on the row. A one-shot `tools/list` health check
+   * runs before returning. On health failure the source lands with
+   * `status: "error"` and the caller can retry via
+   * {@link testUserMcp}. On success, status is `active`.
+   */
+  async registerUserMcp(
+    sandboxId: string,
+    request: import('../types/sources.js').CreateUserMcpSourceRequest,
+  ): Promise<import('../types/sources.js').UserMcpSourceResult> {
+    return this.post<import('../types/sources.js').UserMcpSourceResult>(
+      `${base(sandboxId)}/user-mcp`,
+      request,
+    );
+  }
+
+  /**
+   * Re-run the health check on a `user_mcp` source. Flips status to
+   * `active` on success or `error` on failure. Use after fixing
+   * whatever made `registerUserMcp` land in error state.
+   */
+  async testUserMcp(
+    sandboxId: string,
+    sourceId: string,
+  ): Promise<import('../types/sources.js').UserMcpSourceResult> {
+    return this.post<import('../types/sources.js').UserMcpSourceResult>(
+      `${base(sandboxId)}/${sourceId}/user-mcp/test`,
+    );
+  }
+
+  /**
+   * Disconnect a `user_mcp` source: deletes vault-stored secrets, sets
+   * status to `disconnected` (terminal), and evicts both the agent-side
+   * tool-cap bucket and the receiver-side webhook-cap bucket so
+   * revocation is observed within one request. Reversible only by
+   * calling {@link registerUserMcp} again.
+   */
+  async revokeUserMcp(
+    sandboxId: string,
+    sourceId: string,
+  ): Promise<import('../types/sources.js').UserMcpSourceResult> {
+    return this.post<import('../types/sources.js').UserMcpSourceResult>(
+      `${base(sandboxId)}/${sourceId}/user-mcp/revoke`,
+    );
+  }
+
+  /**
    * Mint a fresh webhook signing secret for a `realtime` data source whose
    * provider has a registered ingestor (Pipedream today). The plaintext
    * `webhook_signing_secret` is returned ONCE on the response — paste it
