@@ -1,0 +1,32 @@
+{
+  "input": {
+    "slug": "gtm-marketing"
+  },
+  "output": {
+    "agent": {
+      "agent_id": "ag_01HXYZAB1234567890123ABCDE",
+      "slug": "gtm-marketing",
+      "name": "GTM Marketing Triage",
+      "description": "Reads incoming marketing-channel events and drafts responses.",
+      "system_prompt": "You triage marketing-channel events. When a mention arrives, summarise the request and react with a thumbs-up.",
+      "tool_allowlist": [
+        "discover",
+        "interpret",
+        "search",
+        "pd_slack_v2_slack_v2-add-reaction"
+      ],
+      "model_settings": {
+        "backend": "anthropic",
+        "model": "claude-sonnet-4-6",
+        "temperature": 0.3,
+        "max_tokens": 4096,
+        "max_turns": 8,
+        "timeout_s": 60
+      },
+      "status": "active",
+      "version": 7,
+      "created_at": "2026-03-12T11:14:00.000000+00:00",
+      "updated_at": "2026-04-22T08:01:55.000000+00:00"
+    }
+  }
+}

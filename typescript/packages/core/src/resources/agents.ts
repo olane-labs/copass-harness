@@ -4,6 +4,7 @@ import type {
   Agent,
   AgentListResponse,
   AgentRun,
+  AgentRunDetail,
   AgentRunListResponse,
   AgentToolCatalogResponse,
   AgentTrigger,
@@ -198,6 +199,24 @@ export class AgentsResource extends BaseResource {
           before: options.before,
         },
       },
+    );
+  }
+
+  /**
+   * Fetch one run by id, including the `tool_resolution_trace` audit
+   * JSON (Phase 4). Targets
+   * `GET /api/v1/storage/sandboxes/{sandbox_id}/agents/runs/{run_id}`.
+   *
+   * The trace is NULL on pre-Phase-4 runs and on ad-hoc
+   * `/agents/run` invocations that bypass the persisted-agent
+   * runtime.
+   */
+  async getRun(
+    sandboxId: string,
+    runId: string,
+  ): Promise<AgentRunDetail> {
+    return this.get<AgentRunDetail>(
+      `${agentsBase(sandboxId)}/runs/${runId}`,
     );
   }
 

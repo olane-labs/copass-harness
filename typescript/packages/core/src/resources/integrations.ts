@@ -5,6 +5,8 @@ import type {
   ConnectionsListResponse,
   ConnectRequest,
   ConnectResponse,
+  IntegrationAccountListResponse,
+  ListAccountsOptions,
   ListConnectionsOptions,
   ReconcileRequest,
   ReconcileResponse,
@@ -52,6 +54,26 @@ export class IntegrationsResource extends BaseResource {
     request: ConnectRequest,
   ): Promise<ConnectResponse> {
     return this.post<ConnectResponse>(`${base(sandboxId)}/${app}/connect`, request);
+  }
+
+  /** List the user's raw upstream OAuth accounts.
+   *
+   * Distinct from {@link list}: connections are local DataSource rows
+   * the connect webhook materialises; accounts are the raw grants on
+   * the upstream provider. Backs the `list_connected_accounts`
+   * management tool. Server-side at
+   * `GET /sources/integrations/accounts`. */
+  async listAccounts(
+    sandboxId: string,
+    options: ListAccountsOptions = {},
+  ): Promise<IntegrationAccountListResponse> {
+    const params = new URLSearchParams();
+    if (options.app_slug) params.set('app_slug', options.app_slug);
+    const qs = params.toString();
+    const path = qs
+      ? `${base(sandboxId)}/accounts?${qs}`
+      : `${base(sandboxId)}/accounts`;
+    return this.get<IntegrationAccountListResponse>(path);
   }
 
   /** List the sandbox's active integration-sourced connections.

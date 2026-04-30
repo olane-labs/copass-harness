@@ -169,6 +169,27 @@ export interface AgentRunListResponse {
   count: number;
 }
 
+/**
+ * Detail view of one run — adds the `tool_resolution_trace` audit JSON
+ * (Phase 4) on top of the list-shape fields. Returned by
+ * `client.agents.getRun(...)`.
+ *
+ * The trace is the answer to "why did this run see the tools it saw?"
+ * — `sources_resolved` / `sources_skipped` / `tool_names_advertised`
+ * / `allowlist_filtered_out` / `allowlist_missing_entries`. NULL on
+ * pre-Phase-4 runs and ad-hoc invocations that bypass the persisted
+ * runtime.
+ */
+export interface AgentRunDetail {
+  run_id: string;
+  agent_id: string;
+  status: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  error_message?: string | null;
+  tool_resolution_trace?: Record<string, unknown> | null;
+}
+
 export interface ListAgentRunsOptions {
   /** Page size, clamped server-side to [1, 100]. */
   limit?: number;

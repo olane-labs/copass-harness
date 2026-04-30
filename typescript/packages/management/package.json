@@ -1,7 +1,7 @@
 {
-  "name": "@copass/core",
-  "version": "0.3.7",
-  "description": "Core client SDK for the Copass platform",
+  "name": "@copass/management",
+  "version": "0.1.0",
+  "description": "Spec-driven management tool registrar for Copass agents (read-only, Phase 1).",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -20,6 +20,16 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
+    },
+    "./adapters/mcp": {
+      "import": {
+        "types": "./dist/adapters/mcp.d.ts",
+        "default": "./dist/adapters/mcp.js"
+      },
+      "require": {
+        "types": "./dist/adapters/mcp.d.cts",
+        "default": "./dist/adapters/mcp.cjs"
+      }
     }
   },
   "files": [
@@ -28,38 +38,46 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "node scripts/copy-spec.mjs && tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
+    "lint:redaction": "python3 ../../../scripts/lint_redaction.py",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "copass",
-    "knowledge-graph",
-    "sdk",
-    "client",
+    "management",
+    "agents",
+    "mcp",
     "olane"
   ],
   "author": "Olane Inc.",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/olane-labs/copass-harness.git",
-    "directory": "typescript/packages/core"
-  },
   "engines": {
     "node": ">=18.0.0"
   },
-  "dependencies": {
+  "peerDependencies": {
+    "@copass/core": "^0.3.7",
     "zod": "^4.3.0"
   },
+  "peerDependenciesMeta": {
+    "@modelcontextprotocol/sdk": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@copass/core": "^0.3.7",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^25.0.0",
     "tsup": "^8.5.0",
-    "vitest": "^4.1.0"
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0",
+    "zod": "^4.3.0"
   },
-  "gitHead": "fb7984c723588558b5fb81ff3651cfa84d12da5d"
+  "copass": {
+    "minSpecVersion": "v1",
+    "maxSpecVersion": "v1"
+  }
 }

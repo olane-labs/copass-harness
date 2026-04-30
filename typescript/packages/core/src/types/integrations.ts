@@ -123,3 +123,26 @@ export interface ReconcileResponse {
   /** Post-reconcile state — same shape as `listConnections`. */
   connections: ConnectionItem[];
 }
+
+/** One raw upstream OAuth account (distinct from a `ConnectionItem`,
+ * which is the local DataSource row that the connect webhook materialises
+ * on top of an account). Tagged with the originating provider in
+ * multi-provider deployments. */
+export interface IntegrationAccount {
+  id: string;
+  app_slug: string;
+  name: string;
+  created_at?: string | null;
+  provider: string;
+}
+
+export interface IntegrationAccountListResponse {
+  accounts: IntegrationAccount[];
+  count: number;
+}
+
+/** Options for `listAccounts`. */
+export interface ListAccountsOptions {
+  /** Filter to one app slug (e.g. `slack`, `gmail`). */
+  app_slug?: string;
+}
