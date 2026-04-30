@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.6](https://github.com/olane-labs/copass-harness/compare/@copass/datasource-fs@0.3.5...@copass/datasource-fs@0.3.6) (2026-04-30)
+
+**Note:** Version bump only for package @copass/datasource-fs
+
 ## [0.3.5](https://github.com/olane-labs/copass-harness/compare/@copass/datasource-fs@0.3.4...@copass/datasource-fs@0.3.5) (2026-04-28)
 
 **Note:** Version bump only for package @copass/datasource-fs
