@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "get_source",
+  "description": "Fetch one data source by id (full detail including `adapter_config` — useful for diagnosing which trigger component is deployed against it).",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["data_source_id"],
+    "properties": {
+      "data_source_id": {
+        "type": "string",
+        "description": "UUID of the data source."
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["source"],
+        "properties": {
+          "source": {
+            "type": "object",
+            "required": ["data_source_id", "provider", "status"],
+            "properties": {
+              "data_source_id": { "type": "string" },
+              "name": { "type": "string" },
+              "provider": { "type": "string" },
+              "ingestion_mode": { "type": ["string", "null"] },
+              "status": { "type": "string" },
+              "kind": { "type": ["string", "null"] },
+              "external_account_id": { "type": ["string", "null"] },
+              "webhook_url": { "type": ["string", "null"] },
+              "last_sync_at": { "type": ["string", "null"], "format": "date-time" },
+              "created_at": { "type": ["string", "null"], "format": "date-time" },
+              "adapter_config": { "type": "object", "additionalProperties": true }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1"
+}

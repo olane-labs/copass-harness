@@ -1,0 +1,32 @@
+{
+  "input": {
+    "app_slug": "slack_v2"
+  },
+  "output": {
+    "tools": [
+      {
+        "name": "pd_slack_v2_slack_v2-add-reaction",
+        "app_slug": "slack_v2",
+        "description": "Add an emoji reaction to a message."
+      },
+      {
+        "name": "pd_slack_v2_slack_v2-post-message",
+        "app_slug": "slack_v2",
+        "description": "Post a message into a channel or thread."
+      }
+    ],
+    "by_app": {
+      "slack_v2": [
+        {
+          "name": "pd_slack_v2_slack_v2-add-reaction",
+          "description": "Add an emoji reaction to a message."
+        },
+        {
+          "name": "pd_slack_v2_slack_v2-post-message",
+          "description": "Post a message into a channel or thread."
+        }
+      ]
+    },
+    "count": 2
+  }
+}

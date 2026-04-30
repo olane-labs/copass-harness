@@ -1,0 +1,24 @@
+{
+  "input": {
+    "agent_slug": "gtm-marketing"
+  },
+  "output": {
+    "agent_slug": "gtm-marketing",
+    "triggers": [
+      {
+        "trigger_id": "tg_01HXYZAB1234567890123TRIG1",
+        "data_source_id": "ds_01HXYZAB1234567890123ABCDE",
+        "event_type_filter": "slack.message.new",
+        "filter_config": {
+          "item.channel": "C0123456789"
+        },
+        "status": "active",
+        "rate_limit_per_hour": 60,
+        "fire_count": 142,
+        "last_fired_at": "2026-04-29T18:02:55.000000+00:00",
+        "created_at": "2026-03-12T11:14:30.000000+00:00"
+      }
+    ],
+    "count": 1
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "input": {
+    "provider": "slack_v2"
+  },
+  "output": {
+    "sources": [
+      {
+        "data_source_id": "ds_01HXYZAB1234567890123ABCDE",
+        "name": "Acme HQ Slack",
+        "provider": "slack_v2",
+        "ingestion_mode": "realtime",
+        "status": "active",
+        "kind": "trigger",
+        "external_account_id": "apn_demo_acct_001",
+        "webhook_url": "https://api.example.copass.id/api/v1/webhooks/integrations/inbound/abc123",
+        "last_sync_at": "2026-04-29T22:14:01.000000+00:00",
+        "created_at": "2026-02-11T17:02:33.000000+00:00"
+      }
+    ],
+    "count": 1
+  }
+}

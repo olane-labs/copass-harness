@@ -1,0 +1,25 @@
+{
+  "input": {
+    "q": "slack",
+    "limit": 10
+  },
+  "output": {
+    "apps": [
+      {
+        "app_slug": "slack_v2",
+        "name": "Slack",
+        "description": "Send messages, react, and read channels.",
+        "categories": ["chat", "team-collaboration"],
+        "provider": "trigger_provider"
+      },
+      {
+        "app_slug": "slack-admin",
+        "name": "Slack Admin",
+        "description": "Workspace admin actions.",
+        "categories": ["chat", "admin"],
+        "provider": "trigger_provider"
+      }
+    ],
+    "next_cursor": null
+  }
+}

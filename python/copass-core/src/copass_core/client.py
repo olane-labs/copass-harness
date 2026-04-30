@@ -27,13 +27,16 @@ from copass_core.http.http_client import (
     RequestMiddleware,
     ResponseMiddleware,
 )
+from copass_core.resources.agents import AgentsResource
 from copass_core.resources.api_keys import ApiKeysResource
 from copass_core.resources.context import ContextResource
 from copass_core.resources.entities import EntitiesResource
 from copass_core.resources.ingest import IngestResource
+from copass_core.resources.integrations import IntegrationsResource
 from copass_core.resources.matrix import MatrixResource
 from copass_core.resources.projects import ProjectsResource
 from copass_core.resources.retrieval import RetrievalResource
+from copass_core.resources.sandbox_connections import SandboxConnectionsResource
 from copass_core.resources.sandboxes import SandboxesResource
 from copass_core.resources.sources import SourcesResource
 from copass_core.resources.usage import UsageResource
@@ -116,6 +119,11 @@ class CopassClient:
     api_keys: ApiKeysResource
     usage: UsageResource
 
+    # Agents + integrations + cross-user grants
+    agents: AgentsResource
+    integrations: IntegrationsResource
+    sandbox_connections: SandboxConnectionsResource
+
     # Higher-order primitive (builds on sources + ingest)
     context_window: ContextWindowResource
 
@@ -161,6 +169,11 @@ class CopassClient:
         self.users = UsersResource(http)
         self.api_keys = ApiKeysResource(http)
         self.usage = UsageResource(http)
+
+        # Agents + integrations + cross-user grants
+        self.agents = AgentsResource(http)
+        self.integrations = IntegrationsResource(http)
+        self.sandbox_connections = SandboxConnectionsResource(http)
 
         # Higher-order — depends on sources + ingest, init last.
         self.context_window = ContextWindowResource(self)

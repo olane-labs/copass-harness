@@ -1,0 +1,17 @@
+{
+  "input": {
+    "app_slug": "slack_v2"
+  },
+  "output": {
+    "accounts": [
+      {
+        "id": "apn_demo_acct_001",
+        "app_slug": "slack_v2",
+        "name": "Acme HQ",
+        "created_at": "2026-02-11T17:02:30.000000+00:00",
+        "provider": "trigger_provider"
+      }
+    ],
+    "count": 1
+  }
+}

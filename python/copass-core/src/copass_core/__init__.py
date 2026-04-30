@@ -51,6 +51,8 @@ from copass_core.http import (
     retry_with_backoff,
 )
 from copass_core.resources import (
+    AgentsResource,
+    AgentTriggersResource,
     ApiKeysResource,
     BaseResource,
     Behavior,
@@ -64,6 +66,7 @@ from copass_core.resources import (
     DataSourceStatus,
     EntitiesResource,
     IngestResource,
+    IntegrationsResource,
     MatrixDetailLevel,
     MatrixPreset,
     MatrixResource,
@@ -71,6 +74,7 @@ from copass_core.resources import (
     ProvenanceMetadata,
     RetrievalResource,
     Sandbox,
+    SandboxConnectionsResource,
     SandboxLimits,
     SandboxStatus,
     SandboxStorageProvider,
@@ -158,6 +162,11 @@ __all__ = [
     "UsersResource",
     "ApiKeysResource",
     "UsageResource",
+    # Resources — agents + integrations + cross-user grants
+    "AgentsResource",
+    "AgentTriggersResource",
+    "IntegrationsResource",
+    "SandboxConnectionsResource",
     # Higher-order
     "ContextWindow",
     "ContextWindowResource",

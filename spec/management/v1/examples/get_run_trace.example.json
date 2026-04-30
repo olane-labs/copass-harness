@@ -1,0 +1,26 @@
+{
+  "input": {
+    "run_id": "rn_01HXYZAB1234567890123RUN01"
+  },
+  "output": {
+    "run_id": "rn_01HXYZAB1234567890123RUN01",
+    "agent_id": "ag_01HXYZAB1234567890123ABCDE",
+    "status": "succeeded",
+    "started_at": "2026-04-29T18:02:55.000000+00:00",
+    "finished_at": "2026-04-29T18:03:00.000000+00:00",
+    "error_message": null,
+    "tool_resolution_trace": {
+      "sources_resolved": ["copass_management", "copass_retrieval"],
+      "sources_skipped": [],
+      "tool_names_advertised": [
+        "discover",
+        "interpret",
+        "search",
+        "pd_slack_v2_slack_v2-add-reaction"
+      ],
+      "allowlist_filtered_out": [],
+      "allowlist_missing_entries": [],
+      "duration_ms": 132
+    }
+  }
+}

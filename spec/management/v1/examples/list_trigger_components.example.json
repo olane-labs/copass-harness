@@ -1,0 +1,33 @@
+{
+  "input": {
+    "app": "slack_v2",
+    "q": "mention",
+    "limit": 25
+  },
+  "output": {
+    "components": [
+      {
+        "component_id": "slack_v2-new-mention",
+        "name": "New Mention (Instant)",
+        "description": "Emit when the connected user is mentioned in any subscribed channel.",
+        "version": "0.0.7",
+        "configurable_props": [
+          {
+            "name": "slack",
+            "type": "app",
+            "label": "Slack account",
+            "required": true
+          },
+          {
+            "name": "keyword",
+            "type": "string",
+            "label": "Mention keyword",
+            "required": true,
+            "description": "Literal substring matched against the message text. e.g. 'copass'."
+          }
+        ]
+      }
+    ],
+    "count": 1
+  }
+}
