@@ -9,7 +9,16 @@ are ported.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Literal, Optional, Protocol
+from typing import Any, Final, List, Literal, Mapping, Optional, Protocol
+
+
+AgentBackend = Literal["anthropic", "google"]
+
+
+DEFAULT_MODEL_BY_BACKEND: Final[Mapping[AgentBackend, str]] = {
+    "anthropic": "claude-sonnet-4-6",
+    "google": "gemini-2.5-flash",
+}
 
 
 BackoffStrategy = Literal["exponential", "linear", "fixed"]
@@ -68,10 +77,12 @@ SearchPreset = Literal[
 
 
 __all__ = [
+    "AgentBackend",
     "BackoffStrategy",
-    "RetryConfig",
-    "ChatRole",
     "ChatMessage",
-    "WindowLike",
+    "ChatRole",
+    "DEFAULT_MODEL_BY_BACKEND",
+    "RetryConfig",
     "SearchPreset",
+    "WindowLike",
 ]

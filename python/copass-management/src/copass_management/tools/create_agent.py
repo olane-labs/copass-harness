@@ -2,14 +2,16 @@ from __future__ import annotations
 
 from typing import Any, Dict, TYPE_CHECKING
 
+from copass_core import DEFAULT_MODEL_BY_BACKEND
+
 if TYPE_CHECKING:
     from copass_management.registrar import ToolContext
 
 
 async def create_agent(ctx: "ToolContext", input: Dict[str, Any]) -> Any:
     backend = str(input.get("backend") or "anthropic")
-    default_model = (
-        "claude-sonnet-4-6" if backend == "anthropic" else "gemini-2.5-flash"
+    default_model = DEFAULT_MODEL_BY_BACKEND.get(
+        backend, DEFAULT_MODEL_BY_BACKEND["anthropic"]
     )
     model_settings: Dict[str, Any] = {
         "backend": backend,

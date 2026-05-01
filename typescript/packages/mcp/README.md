@@ -58,7 +58,7 @@ Restart the client after editing. If you see `copass` in the tool picker, you're
 
 ## Verify
 
-Ask Claude "what tools do you have from copass?" — it should list `discover`, `interpret`, `search`, `context_window_create`, `context_window_add_turn`, `context_window_attach`, `context_window_close`, `ingest`.
+Ask Claude "what tools do you have from copass?" — it should list 28 tools across two surfaces: 8 retrieval / Context Window / writeback tools (`discover`, `interpret`, `search`, `context_window_create`, `context_window_add_turn`, `context_window_attach`, `context_window_close`, `ingest`) and the 20 management tools enumerated below.
 
 Then try: *"Use `context_window_create` and then discover anything about checkout retry behavior."* If retrieval returns something, you're end-to-end.
 
@@ -79,6 +79,33 @@ Then try: *"Use `context_window_create` and then discover anything about checkou
 - `ingest` — push durable content into the graph
 
 All retrieval tools are **automatically window-aware** when a window has been created in the session — no id threading needed from the LLM. The server holds one "active" window and uses it implicitly; multi-window callers pass `data_source_id` explicitly.
+
+## Management Tools
+
+The server also exposes the full Copass management surface — agents, sources, triggers, runs, integrations, API keys — so an MCP-speaking client can manage your sandbox by conversation. All 20 tools share the same `COPASS_API_KEY` and `COPASS_SANDBOX_ID` as the retrieval tools and are scoped to that sandbox.
+
+### Read (14)
+
+- `list_sandboxes` — your sandboxes
+- `list_sources` / `get_source` — data sources connected to the sandbox
+- `list_agents` / `get_agent` — agents you've created
+- `list_triggers` — triggers attached to a specific agent
+- `list_runs` / `get_run_trace` — recent runs and tool-resolution traces
+- `list_trigger_components` / `list_apps` / `list_connected_accounts` — Pipedream catalog and OAuth accounts
+- `list_api_keys` — API keys minted in the sandbox
+- `list_agent_tools` — exact callable tool names available to a given agent
+- `list_sandbox_connections` — sandbox grants (owner-only)
+
+### Write (6, reversible)
+
+- `create_agent` — provision a new agent with prompt, model, and tool config
+- `update_agent_prompt` / `update_agent_tools` / `update_agent_tool_sources` — update agent configuration
+- `add_user_mcp_source` — register a user-owned MCP source
+- `wire_integration_to_agent` — attach a third-party integration to an agent
+
+Destructive operations (key revocation, sandbox-grant changes, raw key minting) stay on the CLI by policy. The full spec corpus that drives this surface lives in [`@copass/management`](../management) — embed it directly if you're building a custom MCP server.
+
+> **Role gating.** Management tools are scoped to the `COPASS_SANDBOX_ID` environment variable. Viewer-role users see all 20 tools in the catalog but write attempts return permission-denied errors at call time. The MCP server does not pre-filter by role — denial happens at the service layer to avoid an extra HTTP round-trip at startup.
 
 ## Why this, not the direct SDK adapters
 

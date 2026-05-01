@@ -89,6 +89,7 @@ export type {
 } from './types/integrations.js';
 
 // Reactive Agents (OLANE-1532)
+export { DEFAULT_MODEL_BY_BACKEND } from './types/agents.js';
 export type {
   Agent,
   AgentBackend,

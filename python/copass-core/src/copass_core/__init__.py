@@ -92,8 +92,10 @@ from copass_core.resources import (
     VaultResource,
 )
 from copass_core.types import (
+    AgentBackend,
     ChatMessage,
     ChatRole,
+    DEFAULT_MODEL_BY_BACKEND,
     RetryConfig,
     SearchPreset,
     WindowLike,
@@ -177,6 +179,8 @@ __all__ = [
     "BaseDataSource",
     "ensure_data_source",
     # Types
+    "AgentBackend",
+    "DEFAULT_MODEL_BY_BACKEND",
     "RetryConfig",
     "ChatMessage",
     "ChatRole",

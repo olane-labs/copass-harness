@@ -61,6 +61,28 @@ describe('registerManagementTools', () => {
     }
   });
 
+  it('throws when a spec entry has no handler and allowMissingHandlers is false', async () => {
+    const toolsModule = await import('../src/tools/index.js');
+    const original = toolsModule.TOOL_HANDLERS.list_sandboxes;
+    delete (toolsModule.TOOL_HANDLERS as Record<string, unknown>).list_sandboxes;
+    try {
+      const client = new CopassClient({
+        apiUrl: 'http://test',
+        auth: { type: 'api-key', key: 'olk_test' },
+      });
+
+      expect(() =>
+        registerManagementTools(
+          () => undefined,
+          client,
+          { sandboxId: 'sb_test', specDir: sourceSpecDir },
+        ),
+      ).toThrow(/no handler implementation for tool "list_sandboxes"/);
+    } finally {
+      (toolsModule.TOOL_HANDLERS as Record<string, unknown>).list_sandboxes = original;
+    }
+  });
+
   it('threads parsed input through the handler to the client', async () => {
     const fakeFetch = vi.fn(async () =>
       new Response(JSON.stringify({ sandboxes: [], count: 0 }), {

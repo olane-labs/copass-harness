@@ -1,7 +1,8 @@
-import type {
-  AgentBackend,
-  AgentModelSettings,
-  CreateAgentRequest,
+import {
+  DEFAULT_MODEL_BY_BACKEND,
+  type AgentBackend,
+  type AgentModelSettings,
+  type CreateAgentRequest,
 } from '@copass/core';
 
 import type { ToolContext, ToolHandler } from '../registrar.js';
@@ -12,8 +13,7 @@ export const createAgent: ToolHandler = async (
 ) => {
   const backend: AgentBackend =
     input.backend === 'google' ? 'google' : 'anthropic';
-  const defaultModel =
-    backend === 'anthropic' ? 'claude-sonnet-4-6' : 'gemini-2.5-flash';
+  const defaultModel = DEFAULT_MODEL_BY_BACKEND[backend];
 
   const modelSettings: AgentModelSettings = {
     backend,

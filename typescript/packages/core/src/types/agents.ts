@@ -11,6 +11,17 @@
 export type AgentBackend = 'anthropic' | 'google';
 export type AgentStatus = 'active' | 'archived';
 
+/**
+ * Default model id per backend used when ``create_agent`` callers
+ * leave ``model`` unset. Single source of truth — both the harness
+ * SDKs and the backend Concierge handler import this constant
+ * rather than inlining the conditional.
+ */
+export const DEFAULT_MODEL_BY_BACKEND: Readonly<Record<AgentBackend, string>> = {
+  anthropic: 'claude-sonnet-4-6',
+  google: 'gemini-2.5-flash',
+};
+
 export interface AgentModelSettings {
   /** Which shared agent runtime services this agent. */
   backend: AgentBackend;

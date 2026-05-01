@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CopassClient } from '@copass/core';
+import { registerToMcpServer } from '@copass/management/adapters/mcp';
 import type { ServerConfig } from './config.js';
 import { WindowRegistry } from './windows.js';
 import { registerRetrievalTools } from './tools/retrieval.js';
@@ -39,6 +40,12 @@ export function buildServer({ client, config, windows }: BuildServerOptions): Mc
   registerRetrievalTools(server, deps);
   registerContextWindowTools(server, deps);
   registerIngestTool(server, { client, config });
+
+  // All 20 management tools are exposed regardless of sandbox role.
+  // Viewer-role users see write tools but get structured 403 from the
+  // service layer when they call them. Avoids an extra HTTP round-trip
+  // at MCP startup. See ADR 0007 Phase 4 brief §10 for trade-off.
+  registerToMcpServer(server, client, { sandboxId: config.sandbox_id });
 
   return server;
 }

@@ -72,6 +72,25 @@ def test_registers_all_tools_with_spec_names(client: CopassClient) -> None:
         assert isinstance(reg.output_schema, dict)
 
 
+def test_raises_when_handler_missing_and_flag_off(client: CopassClient) -> None:
+    """Production wiring leaves ``allow_missing_handlers`` off; a spec
+    entry without a registered handler must raise loudly so the
+    deployment fails fast rather than silently shipping a partial
+    surface."""
+    from copass_management import tools as tools_module
+
+    original = tools_module.TOOL_HANDLERS.pop("list_sandboxes")
+    try:
+        with pytest.raises(RuntimeError, match="list_sandboxes"):
+            register_management_tools(
+                lambda _reg: None,
+                client,
+                RegistrarOptions(sandbox_id="sb_test", spec_dir=SPEC_DIR),
+            )
+    finally:
+        tools_module.TOOL_HANDLERS["list_sandboxes"] = original
+
+
 @respx.mock
 async def test_registered_handler_invokes_core_client(client: CopassClient) -> None:
     respx.get("http://test/api/v1/storage/sandboxes").mock(

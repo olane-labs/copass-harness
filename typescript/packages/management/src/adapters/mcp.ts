@@ -34,6 +34,8 @@ export function registerToMcpServer(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (async (rawInput: unknown) => {
           const result = await registration.handler(rawInput);
+          const isObjectResult =
+            typeof result === 'object' && result !== null;
           return {
             content: [
               {
@@ -44,6 +46,9 @@ export function registerToMcpServer(
                     : JSON.stringify(result, null, 2),
               },
             ],
+            ...(isObjectResult
+              ? { structuredContent: result as Record<string, unknown> }
+              : {}),
           };
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }) as any,
