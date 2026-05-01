@@ -5,7 +5,7 @@ straight into ``Agent(tools=[...])``. Each function has a type-hinted
 signature; its ``__doc__`` is set from the canonical descriptions in
 ``_strings`` (which mirrors the ``@copass/config`` TypeScript package), so
 the schema + description Pydantic AI generates matches what every other
-adapter in the copass-harness surfaces.
+adapter in the copass surfaces.
 """
 
 from __future__ import annotations

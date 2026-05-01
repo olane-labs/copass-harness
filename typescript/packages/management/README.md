@@ -2,7 +2,7 @@
 
 Spec-driven management tool registrar for Copass agents.
 
-This package consumes the `copass-harness/spec/management/v1/` JSON
+This package consumes the `copass/spec/management/v1/` JSON
 Schema corpus and exposes a transport-agnostic registrar that wires
 each tool through `@copass/core`. An optional MCP adapter lives at
 `@copass/management/adapters/mcp` for Model Context Protocol consumers.

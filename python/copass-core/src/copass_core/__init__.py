@@ -18,7 +18,7 @@ Deferred to v0.3: Supabase OTP auth + crypto module (HKDF,
 AES-GCM, session tokens, DEK — needed for ``BearerAuth(encryption_key=...)``
 to actually generate a wrapped DEK).
 
-.. _`@copass/core`: https://github.com/olane-labs/copass-harness/tree/main/typescript/packages/core
+.. _`@copass/core`: https://github.com/olane-labs/copass/tree/main/typescript/packages/core
 """
 
 from copass_core.auth import (

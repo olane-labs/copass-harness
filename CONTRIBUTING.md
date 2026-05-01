@@ -1,4 +1,4 @@
-# Contributing to copass-harness
+# Contributing to copass
 
 ## Development Setup
 

@@ -107,7 +107,7 @@ Browser (embedded chat UI)
 
 ### `pnpm install` fails with `ETARGET No matching version found for @copass/core`
 
-The scaffold pins `@copass/core@^0.2.0` and `@copass/mcp@^0.1.0`. If those aren't on npm yet, install fails with `ETARGET`. Until they publish, work from a local checkout — `pnpm link` against a cloned `copass-harness` repo.
+The scaffold pins `@copass/core@^0.2.0` and `@copass/mcp@^0.1.0`. If those aren't on npm yet, install fails with `ETARGET`. Until they publish, work from a local checkout — `pnpm link` against a cloned `copass` repo.
 
 ### `.env` is missing `COPASS_SANDBOX_ID` / `COPASS_PROJECT_ID`
 

@@ -22,7 +22,7 @@ name: release-python
 #   1. Reserve the package name.
 #   2. Project -> Publishing -> Add a new publisher (GitHub).
 #      - Owner:       olane-labs
-#      - Repository:  copass-harness
+#      - Repository:  copass
 #      - Workflow:    release-python.yml
 #      - Environment: pypi
 #

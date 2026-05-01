@@ -95,7 +95,7 @@ function readJson(path: string): unknown {
  * 1. Explicit option, when passed
  * 2. `COPASS_MANAGEMENT_SPEC_DIR` env override
  * 3. Bundled `dist/specs/v1/`
- * 4. Source-tree `copass-harness/spec/management/v1/` (dev mode)
+ * 4. Source-tree `copass/spec/management/v1/` (dev mode)
  */
 export function loadManagementSpecs(options: LoadOptions = {}): LoadedManagementCorpus {
   const specDir = options.specDir ? resolve(options.specDir) : resolveDefaultSpecDir();

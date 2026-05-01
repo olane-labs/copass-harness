@@ -92,7 +92,7 @@ evolution have different cadences.
 
 `description` and `inputSchema.description` strings published to SDK consumers
 must not contain internal vendor names. The wordlist enforced by
-`copass-harness/scripts/lint_redaction.py`:
+`copass/scripts/lint_redaction.py`:
 
 - `Pipedream`
 - `Scalekit`

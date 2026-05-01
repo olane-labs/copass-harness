@@ -48,7 +48,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/olane-labs/copass-harness.git",
+    "url": "git+https://github.com/olane-labs/copass.git",
     "directory": "typescript/packages/datasource-olane"
   },
   "engines": {

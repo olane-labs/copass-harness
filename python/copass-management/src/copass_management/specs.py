@@ -7,7 +7,7 @@ Resolves the management spec directory in this order:
 3. Vendored copy bundled inside the package
    (``copass_management/_spec/v1/``).
 4. Source tree
-   (``copass-harness/spec/management/v1/``) — only resolved during local
+   (``copass/spec/management/v1/``) — only resolved during local
    dev when the package is installed editable from the harness checkout.
 """
 

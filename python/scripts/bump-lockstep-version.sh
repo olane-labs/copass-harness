@@ -14,9 +14,9 @@
 #   python/scripts/bump-lockstep-version.sh 1.2.3     # explicit
 #
 # After bumping:
-#   git -C copass-harness add python/VERSION
-#   git -C copass-harness commit -m "release: <reason>"
-#   git -C copass-harness push origin production
+#   git -C copass add python/VERSION
+#   git -C copass commit -m "release: <reason>"
+#   git -C copass push origin production
 #
 set -euo pipefail
 

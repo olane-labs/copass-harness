@@ -6,10 +6,10 @@ strings) must not leak internal vendor branding to SDK consumers.
 
 Usage::
 
-    python copass-harness/scripts/lint_redaction.py [SPEC_ROOT]
+    python copass/scripts/lint_redaction.py [SPEC_ROOT]
 
 `SPEC_ROOT` defaults to the canonical location
-`copass-harness/spec/management/v1/` resolved relative to this file.
+`copass/spec/management/v1/` resolved relative to this file.
 
 Exit codes:
     0 — clean

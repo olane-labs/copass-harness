@@ -1,4 +1,4 @@
-# copass-harness (Python)
+# copass (Python)
 
 Python client SDK for the Copass knowledge graph platform.
 

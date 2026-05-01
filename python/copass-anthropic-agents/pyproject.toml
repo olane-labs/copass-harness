@@ -40,8 +40,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/olane-labs/copass-harness"
-Repository = "https://github.com/olane-labs/copass-harness.git"
+Homepage = "https://github.com/olane-labs/copass"
+Repository = "https://github.com/olane-labs/copass.git"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/copass_anthropic_agents"]

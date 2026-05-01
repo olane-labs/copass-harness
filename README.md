@@ -1,4 +1,4 @@
-# copass-harness
+# copass
 
 **Developer SDKs and integrations for [Copass](https://copass.id).** A typed, multi-language monorepo for building agents grounded in a knowledge graph.
 
@@ -67,7 +67,7 @@ copass ingest path/to/notes.md
 ## Repository layout
 
 ```
-copass-harness/
+copass/
   typescript/packages/
     core                  # Client SDK — auth, retrieval, Context Window, sources
     ai-sdk                # Vercel AI SDK tool adapter

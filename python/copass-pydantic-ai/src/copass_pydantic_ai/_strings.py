@@ -1,7 +1,7 @@
 """Canonical tool descriptions, parameter descriptions, and system prompts.
 
 **These must match the TypeScript ``@copass/config`` package verbatim.**
-See ``typescript/packages/config/src/`` in the copass-harness monorepo for
+See ``typescript/packages/config/src/`` in the copass monorepo for
 the source of truth. Python can't consume the npm package directly, so
 this module mirrors the strings. Update both sides together on any copy
 change; run the drift check described in the package README.
