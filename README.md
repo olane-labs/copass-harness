@@ -63,7 +63,7 @@ const next = router.run({
 
 - One API across providers — Anthropic and Google today; OpenAI and self-hosted on the roadmap.
 - 3,000+ OAuth integrations via [Pipedream](https://pipedream.com/apps) — `router.integrations.connect('github', …)` runs the whole OAuth dance.
-- Window-aware retrieval — `discover` / `interpret` / `search` automatically know what the agent already saw.
+- Window-aware retrieval — the agent automatically pulls only what's relevant and new on each turn.
 - Hosted runtime — no agent server to deploy, no SSE plumbing, no tool schemas to wire.
 
 ## 60-second quickstart
@@ -98,7 +98,7 @@ You end up with two things every adapter needs:
 
 ### Framework adapter (you own the runtime)
 
-Drop window-aware retrieval into a framework you already use. The LLM picks between `discover` / `interpret` / `search` on each turn.
+Drop window-aware retrieval into a framework you already use — the agent calls Copass through normal tool-use, the runtime stays in your hands.
 
 | Framework | Package |
 |---|---|
@@ -160,16 +160,29 @@ The client splits cleanly into two layers, both documented in [`docs/api-surface
 - **Storage** (`/api/v1/storage/*`) — `sandboxes`, `sources`, `projects`, `vault`, `ingest`
 - **Knowledge graph** (`/api/v1/*`) — `matrix`, `cosync`, `plans`, `entities`, `users`, `apiKeys`, `usage`
 
-## Core primitives
+## Copass: the context layer
 
-Every package surfaces the same set:
+The data half of the decoupling. Sandboxes hold your data, integrations, memory, and end users — separate from whichever agent runtime is doing the talking. Every package in this repo surfaces the same primitives.
+
+### Primitives
 
 - **Sandbox** — your tenancy boundary. Data, quotas, and encryption keys scope here. Starts empty.
 - **Data source** — a named connection feeding content in. Built-in providers: `slack`, `github`, `linear`, `gmail`, `jira`, `notion`, `custom`. Pick `manual` / `polling` / `realtime` ingestion mode.
 - **Project** — sandbox-scoped grouping. Link one or more data sources; retrieval can be project-scoped.
 - **Vault** — sandbox-scoped raw-bytes KV with optional AES-256-GCM at rest and content-hash dedup.
-- **Context Window** — an agent conversation wrapped as an ephemeral data source. Retrieval is automatically window-aware; the agent's memory isn't a prompt-engineering problem anymore.
-- **Retrieval gradient** — one axis, three calls: `discover` (ranked menu) → `interpret` (synthesized brief) → `search` (direct answer). Pick the point that matches your cost-quality tradeoff.
+- **Context Window** — an agent conversation wrapped as an ephemeral data source. Retrieval reads from it like any other source.
+
+### Retrieval
+
+Three calls on a single quality-vs-cost gradient. The LLM picks one per turn — framework adapters expose them as ordinary tools; the Agent Router wires them automatically inside `router.run()`.
+
+| Call | What you get | Cost | Use when |
+|---|---|---|---|
+| `discover` | A ranked list of relevant entities and snippets | Cheap | You want the LLM to scan a menu and decide what to read next |
+| `interpret` | A synthesized brief that frames the relevant pieces | Moderate | You want the server to do the framing |
+| `search` | A direct natural-language answer | Highest | You want one response, not a menu |
+
+All three are **window-aware**: the server tracks what's already in the agent's prompt and only returns what's new, so retrieval never competes with the LLM's context budget.
 
 ## Authentication
 
