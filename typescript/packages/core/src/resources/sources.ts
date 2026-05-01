@@ -1,5 +1,7 @@
 import { BaseResource } from './base.js';
 import type {
+  ConnectLinearRequest,
+  ConnectLinearResponse,
   DataSource,
   CreateDataSourceRequest,
   UpdateDataSourceRequest,
@@ -60,12 +62,53 @@ export class SourcesResource extends BaseResource {
     return this.get<DataSource>(`${base(sandboxId)}/${sourceId}`);
   }
 
+  /**
+   * Patch a data source's mutable config.
+   *
+   * `options.mergeAdapterConfig` (default `false`) controls whether
+   * `adapter_config` is replaced wholesale (default — backward-compat)
+   * or **deep-merged** into the existing adapter_config server-side.
+   * Top-level keys in the patch override; nested objects recurse.
+   * Use the merge form when toggling one nested key (e.g.
+   * `ingest_to_graph`) without serialising the rest of the config.
+   */
   async update(
     sandboxId: string,
     sourceId: string,
     updates: UpdateDataSourceRequest,
+    options: { mergeAdapterConfig?: boolean } = {},
   ): Promise<DataSource> {
-    return this.patch<DataSource>(`${base(sandboxId)}/${sourceId}`, updates);
+    const query = options.mergeAdapterConfig
+      ? { merge_adapter_config: 'true' }
+      : undefined;
+    return this.patch<DataSource>(
+      `${base(sandboxId)}/${sourceId}`,
+      updates,
+      query ? { query } : undefined,
+    );
+  }
+
+  /**
+   * Connect a Linear workspace as a polling data source.
+   *
+   * Targets `POST /sources/linear` — the secret-aware lifecycle
+   * (vault-put before row write, one-shot `tools/list` health check).
+   * Distinct from {@link register} because the API key cannot be
+   * passed plaintext on `adapter_config`. On health-check failure the
+   * source lands with `status='error'`; retry with a fresh key.
+   *
+   * Tool-shape kept narrow per ADR 0007 §B — no generalisation to a
+   * `register_polling_source` pattern until N>1 polling integrations
+   * exist.
+   */
+  async connectLinear(
+    sandboxId: string,
+    request: ConnectLinearRequest,
+  ): Promise<ConnectLinearResponse> {
+    return this.post<ConnectLinearResponse>(
+      `${base(sandboxId)}/linear`,
+      request,
+    );
   }
 
   async pause(sandboxId: string, sourceId: string): Promise<StatusResponse> {

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "update_source",
+  "description": "Patch a data source's mutable config: `name`, `adapter_config` (e.g. tweak a trigger's `configured_props.keyword`), `ingestion_mode`, `poll_interval_seconds`, `external_account_id`, or `ingest_to_graph` (the knowledge-graph fan-out flag — flipping it merges into existing `adapter_config` rather than replacing it). Pass only the fields to change. Use `get_source` first to see current state. Note: this DOES NOT redeploy the underlying upstream-provider trigger when `adapter_config` changes — for trigger config that needs to take effect immediately, archive + reprovision via `provision_source`.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["data_source_id"],
+    "properties": {
+      "data_source_id": { "type": "string" },
+      "name": { "type": "string" },
+      "adapter_config": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": ["realtime", "polling", "batch", "manual"]
+      },
+      "poll_interval_seconds": {
+        "type": "integer",
+        "minimum": 60
+      },
+      "external_account_id": { "type": "string" },
+      "ingest_to_graph": {
+        "type": "boolean",
+        "description": "Toggle webhook → knowledge-graph fan-out for this source. Plaintext storage; opt-in."
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["source"],
+        "properties": {
+          "source": {
+            "type": "object",
+            "required": ["data_source_id"],
+            "properties": {
+              "data_source_id": { "type": "string" },
+              "name": { "type": ["string", "null"] },
+              "provider": { "type": ["string", "null"] },
+              "ingestion_mode": { "type": ["string", "null"] },
+              "status": { "type": ["string", "null"] },
+              "kind": { "type": ["string", "null"] },
+              "adapter_config": {
+                "type": ["object", "null"],
+                "additionalProperties": true
+              },
+              "external_account_id": { "type": ["string", "null"] },
+              "poll_interval_seconds": { "type": ["integer", "null"] },
+              "updated_at": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1.2"
+}

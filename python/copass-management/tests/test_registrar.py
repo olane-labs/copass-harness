@@ -39,15 +39,18 @@ def test_registers_all_tools_with_spec_names(client: CopassClient) -> None:
         client,
         RegistrarOptions(sandbox_id="sb_test", spec_dir=SPEC_DIR),
     )
-    assert len(registered) == 20
+    assert len(registered) == 33
     names = sorted(r.name for r in registered)
     assert names == sorted(
         [
             "add_user_mcp_source",
+            "connect_linear",
             "create_agent",
+            "create_trigger",
             "get_agent",
             "get_run_trace",
             "get_source",
+            "grant_sandbox_connection",
             "list_agent_tools",
             "list_agents",
             "list_api_keys",
@@ -59,9 +62,19 @@ def test_registers_all_tools_with_spec_names(client: CopassClient) -> None:
             "list_sources",
             "list_trigger_components",
             "list_triggers",
+            "pause_trigger",
+            "provision_source",
+            "resume_trigger",
+            "revoke_sandbox_connection",
+            "revoke_user_mcp_source",
+            "start_integration_connect",
+            "test_user_mcp_source",
+            "update_agent_model_settings",
             "update_agent_prompt",
             "update_agent_tool_sources",
             "update_agent_tools",
+            "update_source",
+            "update_trigger",
             "wire_integration_to_agent",
         ]
     )

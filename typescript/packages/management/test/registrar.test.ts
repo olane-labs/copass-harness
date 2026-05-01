@@ -9,7 +9,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const sourceSpecDir = resolve(here, '..', '..', '..', '..', 'spec', 'management', 'v1');
 
 describe('registerManagementTools', () => {
-  it('registers all 20 tools (14 Phase 1 reads + 6 Phase 2 writes) with handlers bound', () => {
+  it('registers all 33 tools (14 Phase 1 reads + 6 Phase 2 writes + 13 Chunk B writes) with handlers bound', () => {
     const client = new CopassClient({
       apiUrl: 'http://test',
       auth: { type: 'api-key', key: 'olk_test' },
@@ -25,15 +25,18 @@ describe('registerManagementTools', () => {
       },
     );
 
-    expect(registered.length).toBe(20);
+    expect(registered.length).toBe(33);
     const names = registered.map((r) => r.name).sort();
     expect(names).toEqual(
       [
         'add_user_mcp_source',
+        'connect_linear',
         'create_agent',
+        'create_trigger',
         'get_agent',
         'get_run_trace',
         'get_source',
+        'grant_sandbox_connection',
         'list_agent_tools',
         'list_agents',
         'list_api_keys',
@@ -45,9 +48,19 @@ describe('registerManagementTools', () => {
         'list_sources',
         'list_trigger_components',
         'list_triggers',
+        'pause_trigger',
+        'provision_source',
+        'resume_trigger',
+        'revoke_sandbox_connection',
+        'revoke_user_mcp_source',
+        'start_integration_connect',
+        'test_user_mcp_source',
+        'update_agent_model_settings',
         'update_agent_prompt',
         'update_agent_tool_sources',
         'update_agent_tools',
+        'update_source',
+        'update_trigger',
         'wire_integration_to_agent',
       ].sort(),
     );

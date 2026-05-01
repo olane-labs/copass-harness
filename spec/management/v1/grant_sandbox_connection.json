@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "grant_sandbox_connection",
+  "description": "Owner-only. Grant a teammate viewer/editor access to this sandbox. Prefer `copass_id` (e.g. 'alice' or '@alice'); only fall back to `user_id` if a UUID is explicitly given. Returns `connection_id`. Follow up with `spawn_connection_api_key` to give the grantee programmatic access. Auto-stamps `@<handle>` into the audit `label` when minted by handle, so the historical handle survives the grantee renaming.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["role"],
+    "properties": {
+      "copass_id": {
+        "type": "string",
+        "description": "Preferred. Handle like 'alice' or '@alice'. Server normalizes."
+      },
+      "user_id": {
+        "type": "string",
+        "description": "UUID — only if you already have it (rare in conversation)."
+      },
+      "role": {
+        "type": "string",
+        "enum": ["viewer", "editor"]
+      },
+      "project_id": {
+        "type": "string",
+        "description": "Optional. Scope grant to one project; default = whole sandbox."
+      },
+      "label": {
+        "type": "string",
+        "description": "Optional audit label. Auto-stamped to '@<handle>' when copass_id is supplied and label is omitted."
+      },
+      "expires_at": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Optional ISO 8601 expiry. Default: never expires."
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["connection_id"],
+        "properties": {
+          "connection_id": { "type": "string" },
+          "sandbox_id": { "type": ["string", "null"] },
+          "user_id": { "type": ["string", "null"] },
+          "copass_id": { "type": ["string", "null"] },
+          "role": { "type": ["string", "null"] },
+          "project_id": { "type": ["string", "null"] },
+          "label": { "type": ["string", "null"] },
+          "expires_at": { "type": ["string", "null"], "format": "date-time" },
+          "created_at": { "type": ["string", "null"], "format": "date-time" },
+          "next_step": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1.2"
+}

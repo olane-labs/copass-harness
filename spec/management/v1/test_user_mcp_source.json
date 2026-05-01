@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "test_user_mcp_source",
+  "description": "Re-run the health check (one-shot tools/list) on a user_mcp source. Use after the user fixes whatever made `add_user_mcp_source` land in error state, or to verify a previously-active source is still reachable. Flips status to active on success, error on failure. Secrets are not echoed back.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["data_source_id"],
+    "properties": {
+      "data_source_id": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "data_source_id": { "type": ["string", "null"] },
+      "status": { "type": ["string", "null"] },
+      "name": { "type": ["string", "null"] },
+      "ingestion_mode": { "type": ["string", "null"] },
+      "health_error": { "type": ["string", "null"] },
+      "error": { "type": ["string", "null"] },
+      "detail": { "type": ["string", "null"] }
+    },
+    "additionalProperties": true
+  },
+  "since": "v1.2"
+}

@@ -7,7 +7,7 @@ Concierge, `@copass/management` (TypeScript), and `copass-management`
 
 ## Surface
 
-`v1/` ships **20 tools**:
+`v1/` ships **33 tools**:
 
 - **14 read tools** (Phase 1, `since: "v1"`): `list_sandboxes`,
   `list_sources`, `get_source`, `list_agents`, `get_agent`,
@@ -18,16 +18,19 @@ Concierge, `@copass/management` (TypeScript), and `copass-management`
   `update_agent_prompt`, `update_agent_tools`,
   `update_agent_tool_sources`, `add_user_mcp_source`,
   `wire_integration_to_agent`.
+- **13 write tools** (Chunk B, `since: "v1.2"`):
+  `update_agent_model_settings`, `provision_source`, `update_source`,
+  `start_integration_connect`, `connect_linear`,
+  `test_user_mcp_source`, `revoke_user_mcp_source`,
+  `create_trigger`, `pause_trigger`, `resume_trigger`,
+  `update_trigger`, `grant_sandbox_connection`,
+  `revoke_sandbox_connection`.
 
-Six destructive / sensitive Concierge tools (key-minting, grant
-revocation, etc.) are **CLI-only by policy** and are intentionally
-not surfaced here. See the file-header carve-out at
-`frame_graph/copass_id/concierge/tools/mutations.py:1-13` and the
-inline policy comments at each tool's `ManagementTool` definition.
-
-Eleven additional reversible-write tools (triggers, model settings,
-trigger registry, `test_agent`) are deferred to a later spec
-release.
+Four destructive / sensitive Concierge tools remain BACKEND_ONLY by
+policy: `test_agent` (LLM cost-gate gap pending), `mint_agent_invoke_key`,
+`mint_agent_delegate_key`, `spawn_connection_api_key`. See the carve-out
+manifest at `frame_graph/copass_id/concierge/tools/carve_out.py` and
+the inline metadata at `frame_graph/copass_id/concierge/tools/handlers.py:BACKEND_ONLY_TOOL_SPECS`.
 
 ## File shape
 

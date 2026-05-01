@@ -85,23 +85,34 @@ class IntegrationsResource(BaseResource):
         sandbox_id: str,
         app: str,
         *,
-        redirect_uri: Optional[str] = None,
+        success_redirect_uri: str,
+        error_redirect_uri: str,
         scope: Optional[str] = None,
-        external_user_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        webhook_uri: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Mint a provider Connect URL for the given app.
 
         The returned ``connect_url`` is a provider-hosted OAuth page.
         The provider calls Copass's webhook on completion, creating a
         DataSource asynchronously.
+
+        ``webhook_uri`` is an optional override forwarded verbatim to
+        the upstream provider; webhook-using providers honor it,
+        providers that do not use webhooks ignore it. Defaults to a
+        URL composed server-side from the deployment's public base
+        URL.
         """
-        body: Dict[str, Any] = {}
-        if redirect_uri is not None:
-            body["redirect_uri"] = redirect_uri
+        body: Dict[str, Any] = {
+            "success_redirect_uri": success_redirect_uri,
+            "error_redirect_uri": error_redirect_uri,
+        }
         if scope is not None:
             body["scope"] = scope
-        if external_user_id is not None:
-            body["external_user_id"] = external_user_id
+        if project_id is not None:
+            body["project_id"] = project_id
+        if webhook_uri is not None:
+            body["webhook_uri"] = webhook_uri
         return await self._post(f"{_base(sandbox_id)}/{app}/connect", body)
 
     async def list(

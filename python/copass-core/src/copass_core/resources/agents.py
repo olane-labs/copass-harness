@@ -176,6 +176,45 @@ class AgentTriggersResource(BaseResource):
             f"{_agents_base(sandbox_id)}/{slug}/triggers/{trigger_id}"
         )
 
+    async def update_by_id(
+        self,
+        sandbox_id: str,
+        trigger_id: str,
+        *,
+        event_type_filter: Optional[str] = None,
+        filter_config: Optional[Dict[str, Any]] = None,
+        clear_filter_config: bool = False,
+        rate_limit_per_hour: Optional[int] = None,
+        clear_rate_limit: bool = False,
+        status: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Update a trigger by ``trigger_id`` alone — flat top-level
+        route at ``PATCH /sandboxes/{sandbox_id}/triggers/{trigger_id}``.
+
+        Sibling to :meth:`update`. Use this when the caller has only
+        the ``trigger_id`` (no parent ``slug``) — the service-layer
+        key is ``(user_id, trigger_id)`` so no slug lookup is needed.
+        Backs Concierge tools whose input schema only carries
+        ``trigger_id`` (``pause_trigger`` / ``resume_trigger`` /
+        ``update_trigger``).
+        """
+        body: Dict[str, Any] = {
+            "clear_filter_config": clear_filter_config,
+            "clear_rate_limit": clear_rate_limit,
+        }
+        if event_type_filter is not None:
+            body["event_type_filter"] = event_type_filter
+        if filter_config is not None:
+            body["filter_config"] = filter_config
+        if rate_limit_per_hour is not None:
+            body["rate_limit_per_hour"] = rate_limit_per_hour
+        if status is not None:
+            body["status"] = status
+        return await self._patch(
+            f"{_STORAGE_BASE}/{sandbox_id}/triggers/{trigger_id}",
+            body,
+        )
+
 
 class AgentsResource(BaseResource):
     """Reactive Agents resource — persisted agent CRUD + test-fire + run log.
@@ -264,6 +303,47 @@ class AgentsResource(BaseResource):
 
     async def archive(self, sandbox_id: str, slug: str) -> None:
         await self._delete(f"{_agents_base(sandbox_id)}/{slug}")
+
+    async def update_model_settings(
+        self,
+        sandbox_id: str,
+        slug: str,
+        *,
+        backend: Optional[str] = None,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        max_turns: Optional[int] = None,
+        timeout_s: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Patch an agent's ``model_settings`` (partial update).
+
+        Targets ``PATCH /agents/{slug}/model-settings``. Distinct from
+        :meth:`update` so callers can tweak one knob (e.g. switch
+        model or extend ``max_turns``) without serialising the full
+        settings block. Server reads existing settings, merges the
+        patch in, and writes the merged value through the existing
+        ``update_agent(model_settings=...)`` path.
+
+        Backs the Concierge ``update_agent_model_settings`` management
+        tool.
+        """
+        body: Dict[str, Any] = {}
+        if backend is not None:
+            body["backend"] = backend
+        if model is not None:
+            body["model"] = model
+        if temperature is not None:
+            body["temperature"] = temperature
+        if max_tokens is not None:
+            body["max_tokens"] = max_tokens
+        if max_turns is not None:
+            body["max_turns"] = max_turns
+        if timeout_s is not None:
+            body["timeout_s"] = timeout_s
+        return await self._patch(
+            f"{_agents_base(sandbox_id)}/{slug}/model-settings", body,
+        )
 
     async def update_tool_sources(
         self,

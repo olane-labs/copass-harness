@@ -257,6 +257,24 @@ export interface ListTriggersOptions {
 }
 
 /**
+ * Body for ``PATCH /agents/{slug}/model-settings``.
+ *
+ * Partial-patch shape: every field is optional. Only the supplied
+ * fields are merged into the existing model_settings server-side.
+ * Mirrors :class:`AgentModelSettings` field-for-field but each is
+ * optional so callers can change one knob without serialising the
+ * full block.
+ */
+export interface UpdateAgentModelSettingsRequest {
+  backend?: AgentBackend;
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  max_turns?: number;
+  timeout_s?: number;
+}
+
+/**
  * Body for ``PATCH /agents/{slug}/tool-sources``.
  *
  * The field is required so the absent-vs-null distinction is

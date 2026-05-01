@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "pause_trigger",
+  "description": "Pause a trigger so it stops firing the agent. Reversible via `resume_trigger`. Use this for cost containment or diagnostic pauses; for permanent removal advise the user to run `copass agent trigger destroy <slug> <trigger_id>` (CLI-only, intentional).",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["trigger_id"],
+    "properties": {
+      "trigger_id": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["trigger"],
+        "properties": {
+          "trigger": {
+            "type": "object",
+            "required": ["trigger_id"],
+            "properties": {
+              "trigger_id": { "type": "string" },
+              "status": { "type": ["string", "null"] },
+              "updated_at": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1.2"
+}

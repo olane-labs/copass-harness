@@ -93,6 +93,46 @@ export interface DataSourceListResponse {
 }
 
 /**
+ * Body for ``POST /sources/linear``.
+ *
+ * Tool-shape kept narrow per ADR 0007 §B (no generalisation to
+ * `register_polling_source` until N>1 polling integrations exist).
+ * The ``api_key`` is stored in the managed secret store before the
+ * row write and never echoed back.
+ */
+export interface ConnectLinearRequest {
+  /** Linear API key (`lin_api_*`). Stored in the managed secret store. */
+  api_key: string;
+  /** Source name. Defaults to 'Linear'. */
+  name?: string;
+  /** Subset of Linear entities to ingest. Defaults to all five. */
+  include?: Array<'teams' | 'users' | 'projects' | 'issues' | 'cycles'>;
+  /** Per-source tool-call rate cap. 1-600. Default 60. */
+  rate_cap_per_minute?: number;
+  /** Polling cadence in seconds. Min 60. Default 900. */
+  poll_interval_seconds?: number;
+}
+
+/**
+ * Outcome shape for ``POST /sources/linear``.
+ *
+ * On success ``data_source_id`` and ``status='active'`` are populated;
+ * on health-check failure ``status='error'`` and ``health_error`` carry
+ * a short reason. Validation failures surface at the HTTP layer (400)
+ * before reaching this shape.
+ */
+export interface ConnectLinearResponse {
+  data_source_id?: string;
+  status?: string;
+  name?: string;
+  ingestion_mode?: string;
+  entities?: string[];
+  health_error?: string;
+  error?: string;
+  detail?: string;
+}
+
+/**
  * Tenant-supplied MCP server registration payload.
  *
  * Backed by `POST /api/v1/storage/sandboxes/{sandboxId}/sources/user-mcp`.

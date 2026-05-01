@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "connect_linear",
+  "description": "Connect a Linear workspace as a first-class data source. Ingests issues, projects, teams, users, and cycles from Linear's hosted MCP server (https://mcp.linear.app/mcp) on a polling cycle. Required: `api_key` (Linear personal API key, starts with `lin_api_`). Optional: `name` (defaults to 'Linear'); `include` (subset of ['teams','users','projects','issues','cycles'] — defaults to all); `rate_cap_per_minute` (1-600, default 60); `poll_interval_seconds` (default 900). The API key is stored in the managed secret store and never echoed back. Health check runs at registration; on failure the source lands in `status='error'` and the user retries by re-running with a fresh key.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["api_key"],
+    "properties": {
+      "api_key": {
+        "type": "string",
+        "description": "Linear API key (lin_api_*). Stored in the managed secret store, never echoed back."
+      },
+      "name": {
+        "type": "string",
+        "description": "Source name. Defaults to 'Linear'."
+      },
+      "include": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["teams", "users", "projects", "issues", "cycles"]
+        },
+        "description": "Entities to ingest. Default: all five."
+      },
+      "rate_cap_per_minute": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 600
+      },
+      "poll_interval_seconds": {
+        "type": "integer",
+        "minimum": 60
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "data_source_id": { "type": "string" },
+          "status": { "type": "string" },
+          "name": { "type": ["string", "null"] },
+          "ingestion_mode": { "type": ["string", "null"] },
+          "entities": {
+            "type": ["array", "null"],
+            "items": { "type": "string" }
+          },
+          "health_error": { "type": ["string", "null"] },
+          "source": {
+            "type": "object",
+            "properties": {
+              "data_source_id": { "type": "string" },
+              "name": { "type": ["string", "null"] },
+              "provider": { "type": ["string", "null"] },
+              "ingestion_mode": { "type": ["string", "null"] },
+              "status": { "type": ["string", "null"] },
+              "kind": { "type": ["string", "null"] },
+              "created_at": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "additionalProperties": true
+          },
+          "hint": { "type": "string" }
+        },
+        "required": ["data_source_id"],
+        "additionalProperties": true
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1.2"
+}

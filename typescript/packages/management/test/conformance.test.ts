@@ -64,7 +64,7 @@ describe('@copass/management conformance', () => {
     expect(MAX_SPEC_VERSION).toBe('v1');
   });
 
-  it('loads the 14 Phase 1 read tools and the 6 Phase 2 write specs', () => {
+  it('loads the 14 Phase 1 read tools, 6 Phase 2 write specs, and 13 Chunk B write specs', () => {
     const names = Object.keys(corpus.specs).sort();
     expect(names).toEqual(
       [
@@ -90,9 +90,23 @@ describe('@copass/management conformance', () => {
         'update_agent_tool_sources',
         'update_agent_tools',
         'wire_integration_to_agent',
+        // Chunk B write tools (since: "v1.2").
+        'connect_linear',
+        'create_trigger',
+        'grant_sandbox_connection',
+        'pause_trigger',
+        'provision_source',
+        'resume_trigger',
+        'revoke_sandbox_connection',
+        'revoke_user_mcp_source',
+        'start_integration_connect',
+        'test_user_mcp_source',
+        'update_agent_model_settings',
+        'update_source',
+        'update_trigger',
       ].sort(),
     );
-    expect(names.length).toBe(20);
+    expect(names.length).toBe(33);
   });
 
   it('has a fixture for every tool', () => {

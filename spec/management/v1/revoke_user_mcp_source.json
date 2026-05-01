@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "revoke_user_mcp_source",
+  "description": "Disconnect a user_mcp source: delete its managed-secret-store secret(s), set status='disconnected' (terminal), and evict its rate-cap bucket so any in-flight agent turn stops seeing tools from this source within one request. Reversible only by re-running `add_user_mcp_source`.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["data_source_id"],
+    "properties": {
+      "data_source_id": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "data_source_id": { "type": ["string", "null"] },
+      "status": { "type": ["string", "null"] },
+      "name": { "type": ["string", "null"] },
+      "ingestion_mode": { "type": ["string", "null"] },
+      "health_error": { "type": ["string", "null"] },
+      "error": { "type": ["string", "null"] },
+      "detail": { "type": ["string", "null"] }
+    },
+    "additionalProperties": true
+  },
+  "since": "v1.2"
+}

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "update_agent_model_settings",
+  "description": "Patch an existing agent's `model_settings` (backend, model, temperature, max_tokens, max_turns, timeout_s). Pass only the fields to change — others are preserved. Use to switch model (e.g. haiku → sonnet), tighten temperature, or extend max_turns. Show the user the current settings via `get_agent` first when the change is non-trivial.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["slug"],
+    "properties": {
+      "slug": {
+        "type": "string",
+        "description": "The agent's slug."
+      },
+      "backend": {
+        "type": "string",
+        "enum": ["anthropic", "google"],
+        "description": "Which shared agent runtime services this agent."
+      },
+      "model": {
+        "type": "string",
+        "description": "Backend-specific model id (e.g. 'claude-sonnet-4-6')."
+      },
+      "temperature": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 2
+      },
+      "max_tokens": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "max_turns": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "timeout_s": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["agent"],
+        "properties": {
+          "agent": {
+            "type": "object",
+            "required": ["agent_id", "slug"],
+            "properties": {
+              "agent_id": { "type": "string" },
+              "slug": { "type": "string" },
+              "version": { "type": ["integer", "null"] },
+              "updated_at": { "type": ["string", "null"], "format": "date-time" },
+              "model_settings": {
+                "type": "object",
+                "properties": {
+                  "backend": { "type": "string" },
+                  "model": { "type": "string" },
+                  "temperature": { "type": ["number", "null"] },
+                  "max_tokens": { "type": ["integer", "null"] },
+                  "max_turns": { "type": ["integer", "null"] },
+                  "timeout_s": { "type": ["integer", "null"] }
+                },
+                "additionalProperties": true
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1.2"
+}

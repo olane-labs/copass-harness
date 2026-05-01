@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "provision_source",
+  "description": "Register a new data source. For realtime sources backed by the upstream integration provider with a trigger component configured under `adapter_config`, the server auto-deploys the named trigger component pointing at a freshly-minted webhook URL — end-to-end with no upstream-provider UI step. Resolve the `component_id` and required `configured_props` via `list_trigger_components` first. The returned `webhook_signing_secret` is shown ONCE — surface it to the user for their records. Pass `ingest_to_graph=true` to ALSO feed each incoming webhook event into the user's knowledge graph (alongside firing agents). NOTE: graph-collected webhook data is stored UNENCRYPTED — the third-party-tooling collection surface skips DEK by design. Mention this to the user before flipping it on.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["name"],
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Human-readable source name."
+      },
+      "provider": {
+        "type": "string",
+        "description": "Provider id. Use the upstream integration provider's id for realtime sources, or 'custom' for manual ingestion."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": ["realtime", "polling", "batch", "manual"]
+      },
+      "kind": {
+        "type": "string",
+        "enum": ["durable", "ephemeral"]
+      },
+      "external_account_id": { "type": "string" },
+      "poll_interval_seconds": {
+        "type": "integer",
+        "minimum": 60
+      },
+      "adapter_config": {
+        "type": "object",
+        "description": "Adapter-specific config. To auto-deploy a trigger via the upstream integration provider, include the trigger component descriptor (`component_id` + `configured_props`) under the provider's adapter-config key — see `list_trigger_components`.",
+        "additionalProperties": true
+      },
+      "ingest_to_graph": {
+        "type": "boolean",
+        "description": "Opt the source into knowledge-graph ingestion. When true, every webhook event flowing through this source's URL is enqueued for extraction (plaintext storage). Default false."
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["source"],
+        "properties": {
+          "source": {
+            "type": "object",
+            "required": ["data_source_id", "name", "provider"],
+            "properties": {
+              "data_source_id": { "type": "string" },
+              "name": { "type": "string" },
+              "provider": { "type": "string" },
+              "ingestion_mode": { "type": ["string", "null"] },
+              "status": { "type": ["string", "null"] },
+              "kind": { "type": ["string", "null"] },
+              "webhook_url": { "type": ["string", "null"] },
+              "created_at": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "additionalProperties": true
+          },
+          "webhook_signing_secret": { "type": ["string", "null"] },
+          "auto_deploy_error": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1.2"
+}

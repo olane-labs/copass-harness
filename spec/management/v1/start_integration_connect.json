@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "start_integration_connect",
+  "description": "Mint a Connect URL the user opens in their browser to OAuth into a third-party service (Slack, Gmail, GitHub, BigQuery, Twitter / X, Notion, etc.). Routes through the active integration provider — whatever the deployment is wired to — so the chat flow is provider-neutral. Reach for this when the user wants to add an integration that `list_sources` shows isn't connected yet. Returns the URL to share with the user; their browser handles the OAuth dance, and the resulting connection lands under the same user namespace the agent's tool resolver reads from.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["app_slug"],
+    "properties": {
+      "app_slug": {
+        "type": "string",
+        "description": "App slug as the active provider names it. Naming convention varies by upstream provider — run `list_apps` first if unsure."
+      },
+      "success_redirect_uri": {
+        "type": "string",
+        "description": "Optional URL the provider redirects the user to after a successful OAuth — usually the Concierge UI. Omit to use the provider's default success page."
+      },
+      "error_redirect_uri": {
+        "type": "string",
+        "description": "Optional error-redirect URL."
+      },
+      "webhook_uri": {
+        "type": "string",
+        "description": "Optional override for the per-call webhook URI. Webhook-using providers honor it; providers that do not use webhooks ignore it."
+      }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["app_slug", "connect_url"],
+        "properties": {
+          "app_slug": { "type": "string" },
+          "provider": { "type": "string" },
+          "connect_url": { "type": "string" },
+          "session_id": { "type": ["string", "null"] },
+          "expires_at": { "type": ["string", "null"] },
+          "instructions": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" },
+          "provider": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1.2"
+}

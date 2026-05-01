@@ -53,6 +53,13 @@ export interface ConnectRequest {
   error_redirect_uri: string;
   /** Override sandbox-default project scoping. */
   project_id?: string;
+  /**
+   * Optional override for the per-call webhook URI. When set, the
+   * server forwards it to the upstream provider verbatim instead of
+   * composing one from the deployment's public base URL. Webhook-using
+   * providers honor it; providers that do not use webhooks ignore it.
+   */
+  webhook_uri?: string;
 }
 
 /** Response of connect() — hand the browser to `connect_url`. */

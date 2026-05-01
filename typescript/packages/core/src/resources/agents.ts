@@ -17,6 +17,7 @@ import type {
   TestFireRequest,
   TriggerComponentListResponse,
   TriggerListResponse,
+  UpdateAgentModelSettingsRequest,
   UpdateAgentRequest,
   UpdateAgentToolSourcesRequest,
   UpdateTriggerRequest,
@@ -95,6 +96,27 @@ export class AgentTriggersResource extends BaseResource {
       `${agentsBase(sandboxId)}/${slug}/triggers/${triggerId}`,
     );
   }
+
+  /**
+   * Update a trigger by ``trigger_id`` alone — flat top-level route at
+   * ``PATCH /sandboxes/{sandbox_id}/triggers/{trigger_id}``.
+   *
+   * Sibling to :meth:`update`. Use this when the caller has only the
+   * ``trigger_id`` (no parent ``slug``) — the service-layer key is
+   * ``(user_id, trigger_id)`` so no slug lookup is required. Backs
+   * Concierge tools whose input schema only carries ``trigger_id``
+   * (``pause_trigger`` / ``resume_trigger`` / ``update_trigger``).
+   */
+  async updateById(
+    sandboxId: string,
+    triggerId: string,
+    patch: UpdateTriggerRequest,
+  ): Promise<AgentTrigger> {
+    return this.patch<AgentTrigger>(
+      `${BASE}/${sandboxId}/triggers/${triggerId}`,
+      patch,
+    );
+  }
 }
 
 /**
@@ -160,6 +182,30 @@ export class AgentsResource extends BaseResource {
   /** Soft-archive (status → 'archived'). Idempotent. */
   async archive(sandboxId: string, slug: string): Promise<void> {
     await this.delete<void>(`${agentsBase(sandboxId)}/${slug}`);
+  }
+
+  /**
+   * Patch an agent's `model_settings` (partial update).
+   *
+   * Targets `PATCH /agents/{slug}/model-settings`. Distinct from
+   * {@link update} so callers can tweak one knob (e.g. switch model
+   * or extend `max_turns`) without having to serialise the full
+   * settings block. Server reads existing settings, merges the patch
+   * in, and writes the merged value via the existing
+   * `update_agent(model_settings=...)` path.
+   *
+   * Backs the Concierge `update_agent_model_settings` management
+   * tool.
+   */
+  async updateModelSettings(
+    sandboxId: string,
+    slug: string,
+    patch: UpdateAgentModelSettingsRequest,
+  ): Promise<Agent> {
+    return this.patch<Agent>(
+      `${agentsBase(sandboxId)}/${slug}/model-settings`,
+      patch,
+    );
   }
 
   /**

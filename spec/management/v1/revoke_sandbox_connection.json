@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "revoke_sandbox_connection",
+  "description": "Owner-only. Revoke a sandbox grant by `connection_id`. Soft-deletes the row (audit-recoverable) and cascades to every API key bound to this connection so no key outlives its grant. Returns `cascaded_keys` count.",
+  "inputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["connection_id"],
+    "properties": {
+      "connection_id": { "type": "string" }
+    },
+    "additionalProperties": false
+  },
+  "outputSchema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": ["connection_id"],
+        "properties": {
+          "connection_id": { "type": "string" },
+          "revoked": { "type": "boolean" },
+          "cascaded_keys": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" },
+          "detail": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "since": "v1.2"
+}

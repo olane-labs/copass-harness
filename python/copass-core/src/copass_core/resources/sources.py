@@ -131,7 +131,18 @@ class SourcesResource(BaseResource):
         external_account_id: Optional[str] = None,
         adapter_config: Optional[Dict[str, Any]] = None,
         poll_interval_seconds: Optional[int] = None,
+        merge_adapter_config: bool = False,
     ) -> Dict[str, Any]:
+        """Patch a data source's mutable config.
+
+        ``merge_adapter_config`` (default ``False``) controls whether
+        ``adapter_config`` is replaced wholesale (default —
+        backward-compat) or **deep-merged** into the existing
+        adapter_config server-side. Top-level keys in the patch
+        override; nested dicts recurse. Use the merge form when
+        toggling one nested key (e.g. ``ingest_to_graph``) without
+        serialising the rest of the config.
+        """
         updates: Dict[str, Any] = {}
         if name is not None:
             updates["name"] = name
@@ -143,7 +154,48 @@ class SourcesResource(BaseResource):
             updates["adapter_config"] = adapter_config
         if poll_interval_seconds is not None:
             updates["poll_interval_seconds"] = poll_interval_seconds
-        return await self._patch(f"{_base(sandbox_id)}/{source_id}", updates)
+        query = (
+            {"merge_adapter_config": "true"} if merge_adapter_config else None
+        )
+        return await self._patch(
+            f"{_base(sandbox_id)}/{source_id}",
+            updates,
+            query=query,
+        )
+
+    async def connect_linear(
+        self,
+        sandbox_id: str,
+        *,
+        api_key: str,
+        name: Optional[str] = None,
+        include: Optional[List[str]] = None,
+        rate_cap_per_minute: Optional[int] = None,
+        poll_interval_seconds: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Connect a Linear workspace as a polling data source.
+
+        Targets ``POST /sources/linear`` — the secret-aware lifecycle
+        (vault-put before row write, one-shot ``tools/list`` health
+        check). Distinct from :meth:`register` because the API key
+        cannot be passed plaintext on ``adapter_config``. On
+        health-check failure the source lands with ``status='error'``;
+        retry with a fresh key.
+
+        Tool-shape kept narrow per ADR 0007 §B — no generalisation to
+        a ``register_polling_source`` pattern until N>1 polling
+        integrations exist.
+        """
+        body: Dict[str, Any] = {"api_key": api_key}
+        if name is not None:
+            body["name"] = name
+        if include is not None:
+            body["include"] = list(include)
+        if rate_cap_per_minute is not None:
+            body["rate_cap_per_minute"] = rate_cap_per_minute
+        if poll_interval_seconds is not None:
+            body["poll_interval_seconds"] = poll_interval_seconds
+        return await self._post(f"{_base(sandbox_id)}/linear", body)
 
     async def pause(self, sandbox_id: str, source_id: str) -> Dict[str, Any]:
         return await self._post(f"{_base(sandbox_id)}/{source_id}/pause")

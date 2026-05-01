@@ -101,9 +101,23 @@ def test_corpus_loads_phase1_reads_and_phase2_writes(corpus) -> None:
         "update_agent_tool_sources",
         "update_agent_tools",
         "wire_integration_to_agent",
+        # Chunk B write tools.
+        "connect_linear",
+        "create_trigger",
+        "grant_sandbox_connection",
+        "pause_trigger",
+        "provision_source",
+        "resume_trigger",
+        "revoke_sandbox_connection",
+        "revoke_user_mcp_source",
+        "start_integration_connect",
+        "test_user_mcp_source",
+        "update_agent_model_settings",
+        "update_source",
+        "update_trigger",
     }
     assert set(corpus.specs.keys()) == expected
-    assert len(corpus.specs) == 20
+    assert len(corpus.specs) == 33
 
 
 def test_handler_bound_for_every_tool(corpus) -> None:
