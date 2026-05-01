@@ -43,9 +43,7 @@ max_spec_version = "v1"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/copass_management"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"src/copass_management/_spec/v1" = "copass_management/_spec/v1"
+artifacts = ["src/copass_management/_spec/**/*.json"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

@@ -32,7 +32,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Features
 
 - **agents:** add `client.agents` resource with full CRUD, test-fire, run log, dynamic tool catalog, and nested `client.agents.triggers` sub-resource for Reactive Agents
-- **sources:** add `client.sources.rotateWebhookSecret(sandboxId, sourceId)` — mints a fresh webhook signing secret for `realtime` sources whose provider has a registered ingestor (Pipedream today). Plaintext returned ONCE
+- **sources:** add `client.sources.rotateWebhookSecret(sandboxId, sourceId)` — mints a fresh webhook signing secret for `realtime` sources whose provider has a registered ingestor. Plaintext returned ONCE
 - **sources:** `register()` and `rotateWebhookSecret()` now return `webhook_signing_secret` on `DataSource` (transient — never present on `retrieve()` / `list()` responses)
 
 ### BREAKING CHANGES

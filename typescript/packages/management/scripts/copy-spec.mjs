@@ -29,7 +29,6 @@ await mkdir(specDest, { recursive: true });
 const entries = await readdir(specSource, { withFileTypes: true });
 let copied = 0;
 for (const entry of entries) {
-  if (entry.name === 'prompts') continue;
   const src = join(specSource, entry.name);
   const dst = join(specDest, entry.name);
   await cp(src, dst, { recursive: true });

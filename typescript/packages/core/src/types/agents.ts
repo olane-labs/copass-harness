@@ -1,8 +1,7 @@
 /**
  * Reactive Agents — type definitions for the persisted-agent surface.
  *
- * Backs the `/api/v1/storage/sandboxes/{sandbox_id}/agents/*` endpoints
- * (server-side: `frame_graph/copass_id/api/agents_crud.py`).
+ * Backs the `/api/v1/storage/sandboxes/{sandbox_id}/agents/*` endpoints.
  *
  * NB: API JSON uses `model_settings` for the runtime config knobs —
  * Pydantic v2 reserves `model_config` as a ClassVar, so the API
@@ -75,7 +74,7 @@ export interface ListAgentsOptions {
 export interface AgentToolDescriptor {
   /** Tool key e.g. "pd_slack_slack-post-message". */
   name: string;
-  /** Originating Pipedream app_slug. */
+  /** Originating provider app_slug. */
   app_slug: string;
   description: string;
 }
@@ -86,14 +85,14 @@ export interface AgentToolCatalogResponse {
 }
 
 /**
- * One Pipedream trigger component the user can deploy.
+ * One trigger component the user can deploy.
  *
- * Returned by `GET /agents/triggers/components` (server-side
- * `frame_graph/copass_id/api/agents_crud.py:list_trigger_components`).
- * The `component_id` is the slug to pass back as
- * `adapter_config.pipedream_trigger.component_id` when calling
- * `client.sources.register(...)`. `configurable_props` is the
- * JSON-schema-like array Pipedream publishes — each entry's
+ * Returned by `GET /agents/triggers/components`. The `component_id` is
+ * the slug to pass back as `adapter_config.pipedream_trigger.component_id`
+ * when calling `client.sources.register(...)` — the `pipedream_trigger`
+ * adapter-config key is the literal backend field name and is part of
+ * the API contract today. `configurable_props` is the JSON-schema-like
+ * array the upstream provider publishes — each entry's
  * `name`/`type`/`label` tells UI wizards what to ask the user.
  */
 export interface TriggerComponent {
@@ -102,7 +101,7 @@ export interface TriggerComponent {
   description?: string | null;
   version?: string | null;
   /**
-   * Pipedream's prop schema. Each entry has at minimum `name` and
+   * The provider's prop schema. Each entry has at minimum `name` and
    * `type` (e.g. 'app', 'string', 'integer'). Required for the
    * Concierge / wizard layer to interview the user before issuing
    * a deploy.
@@ -118,7 +117,7 @@ export interface TriggerComponentListResponse {
 export interface ListTriggerComponentsOptions {
   /** App slug to filter by, e.g. 'slack', 'gmail'. */
   app?: string;
-  /** Free-text search (Pipedream's `q` parameter). */
+  /** Free-text search (forwarded as the upstream `q` parameter). */
   q?: string;
   /** Page size — server clamps to [1, 100]. Default 50. */
   limit?: number;

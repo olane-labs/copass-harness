@@ -1,8 +1,8 @@
 /**
  * Shared cryptographic constants for session token wrapping and DEK derivation.
  *
- * These values MUST match the server-side constants in frame_graph/crypto_constants.py.
- * See spec/crypto-constants.md for the full specification.
+ * These values MUST match the server-side constants. See
+ * spec/crypto-constants.md for the full specification.
  */
 
 // Session token wrapping (access-token -> wrap key)

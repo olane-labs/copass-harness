@@ -68,28 +68,18 @@ must not contain internal vendor names. The wordlist enforced by
 - `vault` (when used as a vendor / store noun)
 - `Highway`
 - `Olane internal`
+- `MotherDuck`
 
 Generic substitutions: "OAuth provider", "tool-source provider", "managed
 secret store", "trigger-provider registry", etc. The spec linter rejects PRs
 that introduce a forbidden term into a published string.
 
-The `prompts/` subdirectory is the **one exception** — see below.
+## Concierge system prompt — backend-only
 
-## `prompts/concierge-pack-prompt-v17.md`
-
-The full Concierge system prompt (vendor names intact) lives at
-`prompts/concierge-pack-prompt-v17.md` for backend reproducibility and audit.
-This file is:
-
-1. **Excluded from the redaction lint scan.** The lint script skips
-   `prompts/` so the prompt's internal references stay intact.
-2. **Excluded from SDK package builds.** Both `@copass/management` and
-   `copass-management` exclude `prompts/**` from their `files:` globs / wheel
-   includes. SDK consumers never see it.
-
-The backend Concierge continues to load its system prompt from
-`frame_graph/copass_id/concierge/template.py`. This file is a versioned
-copy for change-tracking, not a runtime artifact.
+The full Concierge system prompt is **not published** as part of this spec.
+It is loaded by the hosted Copass platform from a private template and is
+not part of the SDK contract. SDK consumers register the same tool surface
+defined here and supply their own system prompt for their own agents.
 
 ## Conformance contract (Phase 1B)
 
@@ -109,8 +99,7 @@ Failing any step blocks the merge.
 
 - Spec files for the 14 read tools.
 - Fixtures for the 14 read tools.
-- This README, `prompts/concierge-pack-prompt-v17.md`, and
-  `scripts/lint_redaction.py`.
+- This README and `scripts/lint_redaction.py`.
 
 Out of scope (Phase 1B):
 

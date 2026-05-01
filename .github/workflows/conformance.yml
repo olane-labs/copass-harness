@@ -1,0 +1,83 @@
+name: Management Spec Conformance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'spec/management/v1/**'
+      - 'typescript/packages/core/**'
+      - 'typescript/packages/management/**'
+      - 'python/copass-core/**'
+      - 'python/copass-management/**'
+      - 'scripts/lint_redaction.py'
+      - 'scripts/conformance_check.sh'
+      - '.github/workflows/conformance.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'spec/management/v1/**'
+      - 'typescript/packages/core/**'
+      - 'typescript/packages/management/**'
+      - 'python/copass-core/**'
+      - 'python/copass-management/**'
+      - 'scripts/lint_redaction.py'
+      - 'scripts/conformance_check.sh'
+      - '.github/workflows/conformance.yml'
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: typescript/pnpm-lock.yaml
+
+      - name: Install TS dependencies
+        working-directory: typescript
+        run: pnpm install --frozen-lockfile
+
+      - name: Build @copass/core (so workspace symlink resolves new APIs)
+        working-directory: typescript/packages/core
+        run: pnpm run build
+
+      - name: Build @copass/management (copies spec corpus into dist)
+        working-directory: typescript/packages/management
+        run: pnpm run build
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install copass-core (Python)
+        working-directory: python/copass-core
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Install copass-management (Python)
+        working-directory: python/copass-management
+        run: pip install -e ".[dev]"
+
+      - name: Redaction lint
+        run: python3 scripts/lint_redaction.py spec/management/v1
+
+      - name: TypeScript conformance suite
+        working-directory: typescript/packages/management
+        run: pnpm run test
+
+      - name: Python conformance suite
+        working-directory: python/copass-management
+        run: pytest -q
+
+      - name: Cross-language equivalence diff
+        run: bash scripts/conformance_check.sh

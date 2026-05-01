@@ -2,8 +2,7 @@
 """Walk the management spec corpus and reject internal vendor names.
 
 Published spec files (`description` and any `inputSchema.description`
-strings) must not leak internal vendor branding to SDK consumers. The
-backend reproducibility copy under `prompts/` is exempt and skipped.
+strings) must not leak internal vendor branding to SDK consumers.
 
 Usage::
 
@@ -32,6 +31,7 @@ REDACTION_WORDLIST: Sequence[str] = (
     "Highway",
     "Olane internal",
     "vault",
+    "MotherDuck",
 )
 """Substrings rejected (case-insensitive) inside published spec strings.
 
@@ -39,11 +39,6 @@ REDACTION_WORDLIST: Sequence[str] = (
 noun. Generic alternatives ("managed secret store", "stored token") are
 acceptable.
 """
-
-EXEMPT_DIRECTORY_NAMES: frozenset[str] = frozenset({"prompts"})
-"""Subdirectory names whose contents are not scanned. The Concierge prompt
-copy lives under `prompts/` and intentionally retains vendor names."""
-
 
 @dataclass(frozen=True)
 class Violation:
@@ -104,9 +99,6 @@ def _walk_specs(root: Path) -> Iterable[Path]:
     if not root.is_dir():
         raise SystemExit(f"lint_redaction: spec root is not a directory: {root}")
     for path in sorted(root.rglob("*.json")):
-        relative_parts = path.relative_to(root).parts
-        if any(part in EXEMPT_DIRECTORY_NAMES for part in relative_parts):
-            continue
         yield path
 
 

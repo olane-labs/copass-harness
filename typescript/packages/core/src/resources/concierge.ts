@@ -95,9 +95,9 @@ export class ConciergeResource extends BaseResource {
  * only `switch` on known events will skip them implicitly.
  */
 function narrowConciergeEvent(frame: SSEEvent): ConciergeEvent {
-  // The discriminated union below mirrors the wire shapes emitted by
-  // `frame_graph/copass_id/api/concierge.py`. TypeScript's narrowing
-  // requires a runtime check on `event`; the data shape is
-  // server-trusted (we don't validate field-by-field at parse time).
+  // The discriminated union below mirrors the server-emitted wire
+  // shapes. TypeScript's narrowing requires a runtime check on
+  // `event`; the data shape is server-trusted (we don't validate
+  // field-by-field at parse time).
   return frame as ConciergeEvent;
 }

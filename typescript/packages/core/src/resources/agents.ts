@@ -167,7 +167,7 @@ export class AgentsResource extends BaseResource {
    * Phase 1 caveats (server-side):
    * - Anthropic-only — `model_settings.backend = "google"` writes a
    *   failed run with a clear error
-   * - No Pipedream tools wired (empty registry); real trigger dispatch
+   * - No third-party tools wired (empty registry); real trigger dispatch
    *   restores tool wiring
    * - No credit gate — iterate freely without burning balance
    */
@@ -221,8 +221,8 @@ export class AgentsResource extends BaseResource {
   }
 
   /**
-   * Dynamic-per-sandbox tool catalog (resolved live from Pipedream
-   * discovery on the user's connected sources). Server-side at
+   * Dynamic-per-sandbox tool catalog (resolved live from upstream
+   * provider discovery on the user's connected sources). Server-side at
    * `GET /agents/tools`.
    */
   async listTools(sandboxId: string): Promise<AgentToolCatalogResponse> {
@@ -232,11 +232,13 @@ export class AgentsResource extends BaseResource {
   }
 
   /**
-   * Search Pipedream's trigger-component registry. Use BEFORE
+   * Search the upstream trigger-component registry. Use BEFORE
    * `client.sources.register({ adapter_config: { pipedream_trigger:
    * { component_id, configured_props } } })` to discover the right
    * `component_id` and the `configurable_props` schema the user
-   * needs to fill in. Server-side at
+   * needs to fill in. (Note: the `pipedream_trigger` adapter-config
+   * key is the literal backend field name and is part of the API
+   * contract today.) Server-side at
    * `GET /agents/triggers/components`.
    */
   async listTriggerComponents(

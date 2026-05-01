@@ -1,7 +1,6 @@
 /**
- * Cross-user sandbox grants — mirror of `frame_graph/copass_id/api/connections.py`
- * (POST/GET /sandboxes/{sandbox_id}/connections, DELETE /{connection_id},
- * POST /{connection_id}/api-keys).
+ * Cross-user sandbox grants — POST/GET /sandboxes/{sandbox_id}/connections,
+ * DELETE /{connection_id}, POST /{connection_id}/api-keys.
  *
  * Connections let a sandbox owner grant a teammate access to their
  * sandbox. The grantee gets a connection-scoped API key and acts

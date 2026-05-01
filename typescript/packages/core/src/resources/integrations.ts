@@ -23,9 +23,9 @@ const base = (sandboxId: string) =>
  * browser), and manage active connections via {@link list} /
  * {@link disconnect}.
  *
- * The backing integration provider (Pipedream today) is a server-side
- * config; clients see a single unified surface. OAuth tokens are
- * held by the provider — Copass never persists them.
+ * The backing integration provider is a server-side config; clients
+ * see a single unified surface. OAuth tokens are held by the provider
+ * — Copass never persists them.
  */
 export class IntegrationsResource extends BaseResource {
   /** List or search the app catalog for a sandbox. Apps with

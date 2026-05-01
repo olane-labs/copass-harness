@@ -2,10 +2,10 @@
  * Types for the provider-neutral integrations surface
  * (`/api/v1/storage/sandboxes/{sandbox_id}/sources/integrations/*`).
  *
- * The Copass backend fronts one or more integration providers (today:
- * Pipedream Connect) behind a unified dev-facing API. These types
- * describe that API; the underlying provider is an implementation
- * detail the client doesn't see.
+ * The Copass backend fronts one or more integration providers behind
+ * a unified dev-facing API. These types describe that API; the
+ * underlying provider is an implementation detail the client doesn't
+ * see.
  *
  * See ADR 0001 in the backend repo for the full OAuth → DataSource
  * flow.
@@ -47,9 +47,9 @@ export interface ConnectRequest {
   /** Default: `'user'`. Determines the `external_user_id` prefix
    * used to key this connection on the provider side. */
   scope?: IntegrationScope;
-  /** Pipedream redirects the browser here after successful OAuth. */
+  /** The OAuth provider redirects the browser here after successful OAuth. */
   success_redirect_uri: string;
-  /** Pipedream redirects the browser here on denial / failure. */
+  /** The OAuth provider redirects the browser here on denial / failure. */
   error_redirect_uri: string;
   /** Override sandbox-default project scoping. */
   project_id?: string;
@@ -71,7 +71,7 @@ export interface ConnectionItem {
   source_id: string;
   /** App slug (e.g. `slack`, `gmail`). */
   app: string;
-  /** Provider's account id (Pipedream `apn_...`). May be null for
+  /** Provider's account id (`apn_...` prefix). May be null for
    * legacy rows where the webhook didn't capture it. */
   account_id?: string | null;
   /** Display name — usually the workspace/account name. */

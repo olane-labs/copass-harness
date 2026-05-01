@@ -105,12 +105,9 @@ def scope_to_user_id(scope: AgentScope) -> str:
     - ``sandbox_id`` set (no project) → ``"s_<sandbox_id>"``
     - only ``user_id`` → ``"u_<user_id>"``
 
-    This mirrors the scheme used by the Pipedream tool resolver in
-    the server-side repo (see
-    ``frame_graph/agents/tools/resolvers/pipedream_tool_resolver.py``
-    around lines 69-161). Kept local to this package for now; may
-    be promoted to :mod:`copass_core_agents` once a second provider
-    also needs it.
+    Mirrors the scheme used by the upstream tool resolver server-side.
+    Kept local to this package for now; may be promoted to
+    :mod:`copass_core_agents` once a second provider also needs it.
     """
     if scope.project_id:
         return f"p_{scope.project_id}"
@@ -196,8 +193,8 @@ class GoogleAgentBackend(AgentBackend):
                 ``AgentScope → Agent Engine user_id`` mapping. When
                 omitted, defaults to :func:`scope_to_user_id` (most-
                 specific scope wins). Callers that need to match a
-                specific external identity shape downstream (e.g. a
-                Pipedream ``external_user_id`` provisioned as
+                specific external identity shape downstream (e.g. an
+                upstream provider's ``external_user_id`` provisioned as
                 ``u_<user_id>``) should pass a function that produces
                 that exact shape so the ADK session's ``user_id``
                 flows through unchanged into MCP-served tools.

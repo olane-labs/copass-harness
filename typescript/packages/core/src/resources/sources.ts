@@ -162,7 +162,7 @@ export class SourcesResource extends BaseResource {
 
   /**
    * Mint a fresh webhook signing secret for a `realtime` data source whose
-   * provider has a registered ingestor (Pipedream today). The plaintext
+   * provider has a registered ingestor. The plaintext
    * `webhook_signing_secret` is returned ONCE on the response — paste it
    * into your provider's HTTP step as `Authorization: Bearer <secret>`.
    * After this call the server only stores the sha256 hash; lose the

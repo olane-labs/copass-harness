@@ -6,9 +6,7 @@
  * one `{event, data}` object per complete frame. Used by the
  * Concierge `chat()` and the Reactive Agents `streamRun()` resources.
  *
- * Wire format: matches `sse_starlette.EventSourceResponse` exactly
- * (Python server side at `frame_graph/copass_id/api/concierge.py` +
- * `frame_graph/copass_id/api/agents.py`):
+ * Wire format: matches `sse_starlette.EventSourceResponse` exactly:
  *
  *   event: <name>\n
  *   data: <one-line JSON>\n

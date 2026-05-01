@@ -2,11 +2,11 @@
  * Copass Concierge — request/response + streaming event types.
  *
  * Backs the `/api/v1/storage/sandboxes/{sandbox_id}/concierge/*`
- * endpoints (server-side: `frame_graph/copass_id/api/concierge.py`).
+ * endpoints.
  *
  * The Concierge is a per-user platform agent that exposes the
  * Copass management surface (sandboxes, sources, agents, triggers,
- * runs, Pipedream trigger components) as tools to itself. Read tools
+ * runs, trigger components) as tools to itself. Read tools
  * are always enabled; mutating tools require sandbox owner/editor
  * role. Destructive operations (archive/destroy/disconnect/delete)
  * are intentionally CLI-only — the Concierge advises the equivalent
