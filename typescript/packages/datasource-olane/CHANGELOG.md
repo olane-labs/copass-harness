@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.3.7](https://github.com/olane-labs/copass-harness/compare/@copass/datasource-olane@0.3.6...@copass/datasource-olane@0.3.7) (2026-05-01)
+
+**Note:** Version bump only for package @copass/datasource-olane
+
 ## [0.3.6](https://github.com/olane-labs/copass-harness/compare/@copass/datasource-olane@0.3.5...@copass/datasource-olane@0.3.6) (2026-04-30)
 
 **Note:** Version bump only for package @copass/datasource-olane
