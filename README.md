@@ -1,10 +1,104 @@
 # copass
 
-**Developer SDKs and integrations for [Copass](https://copass.id).** A typed, multi-language monorepo for building agents grounded in a knowledge graph.
+**Build AI agents grounded in your data — on any provider.** A typed, multi-language monorepo of SDKs and integrations for [Copass](https://copass.id).
+
+In Copass, **context and agents are decoupled.** Your sandbox holds the data, the integrations, the memory, and the end users. Agent runtimes — Anthropic, Google, more on the way — are interchangeable backends. Swap providers on a per-call flag; your context stays where it is.
+
+```
+  ┌───────────────────────┐
+  │  data source          │   Slack · GitHub · Notion · folder · custom
+  │  (input)              │
+  └───────────┬───────────┘
+              │
+              ▼  ingest                    ← THE STEP NEW USERS MISS
+              │
+  ┌───────────────────────┐
+  │  sandbox              │   knowledge graph + retrieval + memory
+  │  (your tenancy)       │
+  └───────────┬───────────┘
+              │
+              ▼
+  ┌───────────────────────┐
+  │  agents read it       │   discover · interpret · search
+  └───────────────────────┘
+```
+
+**A sandbox starts empty.** Connecting an integration registers a credential — it doesn't pull your data into the sandbox. The activation step is **ingest**.
+
+## The Agent Router — one API for every provider
+
+```typescript
+import { AgentRouter } from '@copass/agent-router';
+
+const router = new AgentRouter({
+  auth: { type: 'api-key', key: process.env.COPASS_API_KEY! },
+  sandboxId: process.env.COPASS_SANDBOX_ID!,
+});
+
+// One agent turn. Streams events as the response is generated.
+const turn = router.run({
+  provider: 'anthropic',
+  model: 'claude-opus-4-7',
+  system: 'You are a helpful agent.',
+  message: 'Summarize my latest GitHub issues.',
+  endUserId: 'u-123',
+});
+
+for await (const event of turn) {
+  if (event.type === 'text') process.stdout.write(event.text);
+}
+
+// Same call, different brain — memory, tools, end users stay.
+const next = router.run({
+  provider: 'google',
+  model: 'gemini-3.1-pro',
+  reasoningEngineId: process.env.COPASS_REASONING_ENGINE_ID!,
+  system: 'You are a helpful agent.',
+  message: 'Same question, different brain.',
+  endUserId: 'u-123',
+});
+```
+
+**What you get out of the box:**
+
+- One API across providers — Anthropic and Google today; OpenAI and self-hosted on the roadmap.
+- 3,000+ OAuth integrations via [Pipedream](https://pipedream.com/apps) — `router.integrations.connect('github', …)` runs the whole OAuth dance.
+- Window-aware retrieval — `discover` / `interpret` / `search` automatically know what the agent already saw.
+- Hosted runtime — no agent server to deploy, no SSE plumbing, no tool schemas to wire.
+
+## 60-second quickstart
+
+```bash
+npm install -g @copass/cli
+copass login                             # email OTP
+copass setup                             # creates a sandbox, writes .olane/refs.json
+copass apikey create --name my-app       # prints an olk_... key — shown once, save it
+
+# Don't skip — your sandbox starts empty.
+copass ingest README.md
+```
+
+You end up with two things every adapter needs:
+
+| Output | Use as |
+|---|---|
+| `olk_...` key from `copass apikey create` | `COPASS_API_KEY` |
+| `./.olane/refs.json` (`sandbox_id`, `project_id`, `data_source_id`) | `COPASS_SANDBOX_ID`, `COPASS_PROJECT_ID` |
 
 ## Pick your path
 
-**Building an agent with an LLM framework?** Use an adapter — the LLM picks between `discover` / `interpret` / `search` on each turn, and retrieval is window-aware automatically.
+### Hosted runtime (recommended for new agents)
+
+`@copass/agent-router` and `copass-agent-router` give you the API at the top of this README — one import, provider-neutral, OAuth integrations in one call.
+
+| Surface | Package |
+|---|---|
+| TypeScript | [`@copass/agent-router`](./typescript/packages/agent-router) |
+| Python | [`copass-agent-router`](./python/copass-agent-router) |
+
+### Framework adapter (you own the runtime)
+
+Drop window-aware retrieval into a framework you already use. The LLM picks between `discover` / `interpret` / `search` on each turn.
 
 | Framework | Package |
 |---|---|
@@ -16,55 +110,32 @@
 | Anthropic Managed Agents (Python) | [`copass-anthropic-agents`](./python/copass-anthropic-agents) |
 | Google Vertex Agent Engine / ADK (Python) | [`copass-google-agents`](./python/copass-google-agents) |
 
-**On the Anthropic managed stack?** Use MCP — zero code, just a config line.
+### MCP (zero code)
+
+For Claude Code, Claude Desktop, Cursor, or any MCP client — drop in a config line, no SDK install.
 
 | Client | Package |
 |---|---|
 | Claude Code · Claude Desktop · Cursor · Claude Agent SDK | [`@copass/mcp`](./typescript/packages/mcp) |
 
-**Starting from zero?** Scaffold a ready-to-deploy Hono server + Claude agent:
+### Scaffolded starter (zero to chat UI)
 
 ```bash
 npx create-copass-agent my-app
 ```
 
-See [`create-copass-agent`](./typescript/packages/create-copass-agent).
+A ready-to-deploy Hono server + Claude agent with an embedded chat UI. ~150 lines across four files; everything is editable. See [`create-copass-agent`](./typescript/packages/create-copass-agent).
 
-**Going lower level?** Talk to the API directly with the typed `CopassClient`:
+### Lower level (talk to the API directly)
+
+`@copass/core` (and Python `copass-core`) exposes the full backend surface as a single typed client. Adapters and the MCP server are built on top of it.
 
 | Use case | Package |
 |---|---|
 | `CopassClient` — auth, retrieval, ingestion, Context Window, sandboxes, sources, projects, vault | [`@copass/core`](./typescript/packages/core) · [`copass-core`](./python/copass-core) |
-| High-level agent SDK — `router.run()` event stream + one-call OAuth integrations | [`@copass/agent-router`](./typescript/packages/agent-router) · [`copass-agent-router`](./python/copass-agent-router) |
 | Spec-driven management tool registrar (read-only Phase 1, 14 tools) | [`@copass/management`](./typescript/packages/management) · [`copass-management`](./python/copass-management) |
 | Filesystem → knowledge graph watcher driver | [`@copass/datasource-fs`](./typescript/packages/datasource-fs) |
 | Olane OS instance management + address book | [`@copass/datasource-olane`](./typescript/packages/datasource-olane) |
-
-## Prerequisites (every path)
-
-```bash
-npm install -g @copass/cli
-copass login                             # email OTP
-copass setup                             # creates a sandbox, writes .olane/refs.json
-copass apikey create --name my-app       # prints an olk_... key — shown once, save it
-```
-
-You end up with two things every adapter needs:
-
-| Output | Use as |
-|---|---|
-| `olk_...` key printed by `copass apikey create` | `COPASS_API_KEY` |
-| `./.olane/refs.json` (`sandbox_id`, `project_id`, `data_source_id`) | `COPASS_SANDBOX_ID`, `COPASS_PROJECT_ID` |
-
-Ingest something so retrieval has material to work with:
-
-```bash
-copass ingest path/to/notes.md
-```
-
-## Talking to the API directly
-
-`@copass/core` (and its Python mirror `copass-core`) exposes the full backend surface as a single typed client. Adapters and the MCP server are all built on top of it.
 
 ```typescript
 import { CopassClient } from '@copass/core';
@@ -76,11 +147,8 @@ const client = new CopassClient({
 // Knowledge-graph retrieval
 const answer = await client.matrix.query({ query: 'How does auth work?' });
 
-// Knowledge confidence scoring
-const score = await client.cosync.score({ canonical_ids: ['…'] });
-
 // Source-driven ingestion (production path)
-const job = await client.sources.ingest(sandboxId, sourceId, {
+await client.sources.ingest(sandboxId, sourceId, {
   text: '…',
   source_type: 'code',
   project_id: projectId,
@@ -89,13 +157,15 @@ const job = await client.sources.ingest(sandboxId, sourceId, {
 
 The client splits cleanly into two layers, both documented in [`docs/api-surface.md`](./docs/api-surface.md):
 
-- **Storage (`/api/v1/storage/*`)** — `sandboxes`, `sources`, `projects`, `vault`, `ingest`
-- **Knowledge graph (`/api/v1/*`)** — `matrix`, `cosync`, `plans`, `entities`, `users`, `apiKeys`, `usage`
+- **Storage** (`/api/v1/storage/*`) — `sandboxes`, `sources`, `projects`, `vault`, `ingest`
+- **Knowledge graph** (`/api/v1/*`) — `matrix`, `cosync`, `plans`, `entities`, `users`, `apiKeys`, `usage`
 
 ## Core primitives
 
-- **Sandbox** — your tenancy boundary. Data, quotas, and encryption keys scope here.
-- **Data source** — a named connection feeding content in. Built-in providers: `slack`, `github`, `linear`, `gmail`, `jira`, `notion`, `custom`. Pick `manual` / `polling` / `realtime` ingestion mode; the wire path is identical, the mode just describes who drives the push.
+Every package surfaces the same set:
+
+- **Sandbox** — your tenancy boundary. Data, quotas, and encryption keys scope here. Starts empty.
+- **Data source** — a named connection feeding content in. Built-in providers: `slack`, `github`, `linear`, `gmail`, `jira`, `notion`, `custom`. Pick `manual` / `polling` / `realtime` ingestion mode.
 - **Project** — sandbox-scoped grouping. Link one or more data sources; retrieval can be project-scoped.
 - **Vault** — sandbox-scoped raw-bytes KV with optional AES-256-GCM at rest and content-hash dedup.
 - **Context Window** — an agent conversation wrapped as an ephemeral data source. Retrieval is automatically window-aware; the agent's memory isn't a prompt-engineering problem anymore.
@@ -158,8 +228,9 @@ copass/
 
 ## Documentation
 
+- **[copass.id/docs](https://docs.copass.id)** — full developer documentation, including the Concierge, Collaboration, Cookbooks, and platform concepts.
 - [Architecture](./docs/architecture.md) — Four-layer SDK design (Auth → Crypto → HTTP → Resources → Client)
-- [API Surface](./docs/api-surface.md) — Full endpoint catalog, split by storage vs knowledge-graph layer
+- [API Surface](./docs/api-surface.md) — Full endpoint catalog
 - [Authentication](./docs/authentication.md) — API key, Bearer JWT, Supabase OTP flows
 - [Encryption](./docs/encryption.md) — AES-256-GCM protocol and HKDF key derivation
 - [Getting Started](./docs/getting-started.md) — Install, create a client, first retrieval, full ingestion walkthrough
