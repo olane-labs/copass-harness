@@ -25,10 +25,11 @@ export interface CopassToolsOptions {
    */
   window?: WindowLike;
   /**
-   * Preset for `interpret` and `search` (ignored by `discover`).
-   * Defaults to `"copass/1.0"`. Append `":thinking"` (e.g.
-   * `"copass/2.0:thinking"`) to enable task decomposition before
-   * retrieval.
+   * Preset for `discover`, `interpret`, and `search`. Defaults to
+   * `"copass/copass_1.0"`. Under `"copass/copass_2.0"` discover items
+   * carry `subgraph` (pre-rendered ASCII tree) and `matched_query_nodes`
+   * fields. Append `":thinking"` (e.g. `"copass/copass_2.0:thinking"`)
+   * to enable task decomposition before retrieval on `search`.
    */
   preset?: SearchPreset;
 }
@@ -57,7 +58,7 @@ export interface CopassToolsOptions {
  * ```
  */
 export function copassTools(options: CopassToolsOptions) {
-  const { client, sandbox_id, project_id, window, preset = 'copass/1.0' } = options;
+  const { client, sandbox_id, project_id, window, preset = 'copass/copass_1.0' } = options;
 
   return {
     discover: tool({
@@ -70,13 +71,20 @@ export function copassTools(options: CopassToolsOptions) {
           query,
           project_id,
           window,
+          preset,
         });
         return {
           header: response.header,
+          // Project the v2 fields (`subgraph` + `matched_query_nodes`)
+          // alongside the v1 fields. Populated only under
+          // `copass/copass_2.0` (or its `copass/2.0` alias); `null`
+          // under v1 — agents can ignore them when not present.
           items: response.items.map((item) => ({
             score: item.score,
             summary: item.summary,
             canonical_ids: item.canonical_ids,
+            subgraph: item.subgraph ?? null,
+            matched_query_nodes: item.matched_query_nodes ?? null,
           })),
           next_steps: response.next_steps,
         };

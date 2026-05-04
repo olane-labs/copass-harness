@@ -70,7 +70,7 @@ def copass_tools(
     sandbox_id: str,
     project_id: Optional[str] = None,
     window: Optional[ContextWindowLike] = None,
-    preset: SearchPreset = "copass/1.0",
+    preset: SearchPreset = "copass/copass_1.0",
 ) -> CopassTools:
     """Return a :class:`CopassTools` bundle wired to ``client``.
 
@@ -80,10 +80,13 @@ def copass_tools(
         project_id: Optional project narrowing.
         window: Optional :class:`ContextWindowLike` — when provided,
             every retrieval call is window-aware.
-        preset: Retrieval preset for ``interpret`` / ``search``.
-            Ignored by ``discover``. Defaults to ``"copass/1.0"``.
-            Append ``":thinking"`` (e.g. ``"copass/2.0:thinking"``)
-            to enable task decomposition before retrieval.
+        preset: Retrieval preset for ``discover`` / ``interpret`` /
+            ``search``. Defaults to ``"copass/copass_1.0"``. Under
+            ``"copass/copass_2.0"`` discover items carry ``subgraph``
+            (pre-rendered ASCII tree) and ``matched_query_nodes``
+            fields. Append ``":thinking"`` (e.g.
+            ``"copass/copass_2.0:thinking"``) to enable task
+            decomposition before retrieval on ``search``.
 
     Example::
 
@@ -101,14 +104,21 @@ def copass_tools(
             query=query,
             project_id=project_id,
             window=window,
+            preset=preset,
         )
         return {
             "header": response.get("header", ""),
             "items": [
+                # Project the v2 fields (``subgraph`` + ``matched_query_nodes``)
+                # alongside the v1 fields. Populated only under
+                # ``copass/copass_2.0`` (or its ``copass/2.0`` alias);
+                # ``None`` under v1.
                 {
                     "score": item.get("score"),
                     "summary": item.get("summary"),
                     "canonical_ids": item.get("canonical_ids", []),
+                    "subgraph": item.get("subgraph"),
+                    "matched_query_nodes": item.get("matched_query_nodes"),
                 }
                 for item in response.get("items", [])
             ],

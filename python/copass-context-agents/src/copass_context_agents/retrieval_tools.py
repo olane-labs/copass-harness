@@ -83,11 +83,13 @@ class _CopassDiscoverTool(AgentTool):
         sandbox_id: str,
         project_id: Optional[str],
         window: Optional[WindowLike],
+        preset: SearchPreset,
     ) -> None:
         self._client = client
         self._sandbox_id = sandbox_id
         self._project_id = project_id
         self._window = window
+        self._preset = preset
 
     @property
     def spec(self) -> ToolSpec:
@@ -118,14 +120,22 @@ class _CopassDiscoverTool(AgentTool):
             query=str(arguments.get("query", "")),
             project_id=self._project_id,
             window=self._window,
+            preset=self._preset,
         )
         return {
             "header": response.get("header"),
             "items": [
+                # Project the v2 fields (``subgraph`` + ``matched_query_nodes``)
+                # alongside the v1 fields. They're populated only when the
+                # configured preset is ``copass/copass_2.0`` (or its
+                # ``copass/2.0`` alias); under v1 they come back as ``None``
+                # and the LLM ignores them.
                 {
                     "score": item.get("score"),
                     "summary": item.get("summary"),
                     "canonical_ids": item.get("canonical_ids", []),
+                    "subgraph": item.get("subgraph"),
+                    "matched_query_nodes": item.get("matched_query_nodes"),
                 }
                 for item in response.get("items", [])
             ],
@@ -254,7 +264,7 @@ def copass_retrieval_tools(
     sandbox_id: str,
     project_id: Optional[str] = None,
     window: Optional[WindowLike] = None,
-    preset: SearchPreset = "copass/1.0",
+    preset: SearchPreset = "copass/copass_1.0",
 ) -> List[AgentTool]:
     """Return ``[discover, interpret, search]`` as :class:`AgentTool` instances.
 
@@ -266,9 +276,13 @@ def copass_retrieval_tools(
             :class:`ContextWindow`). When set, every retrieval call
             is window-aware — repeated ``discover`` calls skip items
             already surfaced earlier in this conversation.
-        preset: Preset for ``interpret`` / ``search``. Defaults to
-            ``"copass/1.0"``. Append ``":thinking"`` (e.g.
-            ``"copass/2.0:thinking"``) to enable task decomposition.
+        preset: Preset for ``discover`` / ``interpret`` / ``search``.
+            Defaults to ``"copass/copass_1.0"``. Under
+            ``"copass/copass_2.0"`` discover items carry ``subgraph``
+            (pre-rendered ASCII tree) and ``matched_query_nodes``
+            fields. Append ``":thinking"`` (e.g.
+            ``"copass/copass_2.0:thinking"``) to enable task
+            decomposition on ``search``.
 
     Returns:
         ``[discover, interpret, search]`` ready to pass to
@@ -280,6 +294,7 @@ def copass_retrieval_tools(
             sandbox_id=sandbox_id,
             project_id=project_id,
             window=window,
+            preset=preset,
         ),
         _CopassInterpretTool(
             client=client,

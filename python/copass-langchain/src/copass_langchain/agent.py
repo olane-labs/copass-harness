@@ -30,7 +30,7 @@ def create_copass_agent(
     window: Optional[ContextWindowLike] = None,
     tools: Optional[List[Any]] = None,
     project_id: Optional[str] = None,
-    preset: SearchPreset = "copass/1.0",
+    preset: SearchPreset = "copass/copass_1.0",
     include_tool_messages: bool = False,
     **react_agent_options: Any,
 ) -> Any:

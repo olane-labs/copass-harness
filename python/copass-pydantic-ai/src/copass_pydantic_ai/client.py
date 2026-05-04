@@ -61,10 +61,13 @@ class CopassRetrievalClient:
         query: str,
         project_id: Optional[str] = None,
         window: Optional[WindowLike] = None,
+        preset: Optional[SearchPreset] = None,
     ) -> dict[str, Any]:
         body: dict[str, Any] = {"query": query, "history": _turns_from(window)}
         if project_id:
             body["project_id"] = project_id
+        if preset is not None:
+            body["preset"] = preset
         return await self._post(f"/api/v1/query/sandboxes/{sandbox_id}/discover", body)
 
     async def interpret(
@@ -75,7 +78,7 @@ class CopassRetrievalClient:
         items: list[list[str]],
         project_id: Optional[str] = None,
         window: Optional[WindowLike] = None,
-        preset: SearchPreset = "copass/1.0",
+        preset: SearchPreset = "copass/copass_1.0",
     ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "query": query,
@@ -94,7 +97,7 @@ class CopassRetrievalClient:
         query: str,
         project_id: Optional[str] = None,
         window: Optional[WindowLike] = None,
-        preset: SearchPreset = "copass/1.0",
+        preset: SearchPreset = "copass/copass_1.0",
     ) -> dict[str, Any]:
         body: dict[str, Any] = {
             "query": query,

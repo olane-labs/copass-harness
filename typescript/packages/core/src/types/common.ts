@@ -20,6 +20,12 @@ export type DetailLevel = 'concise' | 'summary' | 'detailed' | 'full';
 
 /** Matrix search preset names. */
 export type SearchPreset =
+  // Canonical names
+  | 'copass/copass_1.0'
+  | 'copass/copass_2.0'
+  | 'copass/copass_1.0:thinking'
+  | 'copass/copass_2.0:thinking'
+  // Short aliases (kept for backward-compat)
   | 'copass/1.0'
   | 'copass/2.0'
   | 'copass/1.0:thinking'

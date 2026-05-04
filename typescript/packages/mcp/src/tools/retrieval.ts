@@ -45,21 +45,44 @@ export function registerRetrievalTools(server: McpServer, deps: RetrievalDeps): 
       inputSchema: {
         query: z.string().describe(DISCOVER_QUERY_PARAM),
         project_id: z.string().optional().describe(PROJECT_ID_PARAM),
+        // Per-call preset override. `:thinking` variants are
+        // /search-only and rejected on /discover, so the enum here
+        // intentionally omits them.
+        preset: z
+          .enum([
+            'copass/copass_1.0',
+            'copass/copass_2.0',
+            // Short aliases (kept for backward-compat)
+            'copass/1.0',
+            'copass/2.0',
+          ])
+          .optional()
+          .describe(PRESET_PARAM),
       },
     },
-    async ({ query, project_id }) => {
+    async ({ query, project_id, preset }) => {
       try {
         const response = await client.retrieval.discover(config.sandbox_id, {
           query,
           project_id: project_id ?? config.project_id,
           window: windows.resolve(),
+          // Per-call override wins; otherwise inherit the subprocess
+          // default. `:thinking` variants are stripped at the server
+          // (/discover rejects them) so we don't second-guess here.
+          preset: preset ?? config.preset,
         });
         return mcpResult({
           header: response.header,
+          // Project the v2 fields (`subgraph` + `matched_query_nodes`)
+          // alongside the v1 fields. Populated only under
+          // `copass/copass_2.0` (or its `copass/2.0` alias); `null`
+          // under v1.
           items: response.items.map((item) => ({
             score: item.score,
             summary: item.summary,
             canonical_ids: item.canonical_ids,
+            subgraph: item.subgraph ?? null,
+            matched_query_nodes: item.matched_query_nodes ?? null,
           })),
           next_steps: response.next_steps,
         });
@@ -76,7 +99,13 @@ export function registerRetrievalTools(server: McpServer, deps: RetrievalDeps): 
       inputSchema: {
         query: z.string().describe(INTERPRET_QUERY_PARAM),
         items: z.array(z.array(z.string()).min(1)).min(1).describe(INTERPRET_ITEMS_PARAM),
-        preset: z.enum(['copass/1.0', 'copass/2.0']).optional().describe(PRESET_PARAM),
+        preset: z.enum([
+          'copass/copass_1.0',
+          'copass/copass_2.0',
+          // Short aliases (kept for backward-compat)
+          'copass/1.0',
+          'copass/2.0',
+        ]).optional().describe(PRESET_PARAM),
         project_id: z.string().optional().describe(PROJECT_ID_PARAM),
       },
     },
@@ -106,6 +135,12 @@ export function registerRetrievalTools(server: McpServer, deps: RetrievalDeps): 
         // run the base preset on each before a combined synthesis.
         preset: z
           .enum([
+            // Canonical names
+            'copass/copass_1.0',
+            'copass/copass_2.0',
+            'copass/copass_1.0:thinking',
+            'copass/copass_2.0:thinking',
+            // Short aliases (kept for backward-compat)
             'copass/1.0',
             'copass/2.0',
             'copass/1.0:thinking',

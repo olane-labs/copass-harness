@@ -27,7 +27,7 @@ def copass_tools(
     sandbox_id: str,
     project_id: Optional[str] = None,
     window: Optional[WindowLike] = None,
-    preset: SearchPreset = "copass/1.0",
+    preset: SearchPreset = "copass/copass_1.0",
 ) -> tuple[Callable[..., Any], Callable[..., Any], Callable[..., Any]]:
     """Return Copass retrieval as three Pydantic AI-compatible tool callables.
 
@@ -37,10 +37,13 @@ def copass_tools(
         project_id: Optional project scoping.
         window: Optional :class:`WindowLike` (e.g. a Context Window handle).
             When provided, every retrieval call is window-aware.
-        preset: Preset for ``interpret`` / ``search``. Defaults to
-            ``"copass/1.0"``. Append ``":thinking"`` (e.g.
-            ``"copass/2.0:thinking"``) to enable task decomposition
-            before retrieval.
+        preset: Preset for ``discover`` / ``interpret`` / ``search``.
+            Defaults to ``"copass/copass_1.0"``. Under
+            ``"copass/copass_2.0"`` discover items carry ``subgraph``
+            (pre-rendered ASCII tree) and ``matched_query_nodes``
+            fields. Append ``":thinking"`` (e.g.
+            ``"copass/copass_2.0:thinking"``) to enable task
+            decomposition before retrieval on ``search``.
 
     Returns:
         ``(discover, interpret, search)`` — three async callables, ready to
@@ -63,15 +66,25 @@ def copass_tools(
 
     async def discover(query: str) -> dict[str, Any]:
         response = await client.discover(
-            sandbox_id, query=query, project_id=project_id, window=window
+            sandbox_id,
+            query=query,
+            project_id=project_id,
+            window=window,
+            preset=preset,
         )
         return {
             "header": response.get("header"),
             "items": [
+                # Project the v2 fields (``subgraph`` + ``matched_query_nodes``)
+                # alongside the v1 fields. Populated only under
+                # ``copass/copass_2.0`` (or its ``copass/2.0`` alias);
+                # ``None`` under v1.
                 {
                     "score": item.get("score"),
                     "summary": item.get("summary"),
                     "canonical_ids": item.get("canonical_ids", []),
+                    "subgraph": item.get("subgraph"),
+                    "matched_query_nodes": item.get("matched_query_nodes"),
                 }
                 for item in response.get("items", [])
             ],

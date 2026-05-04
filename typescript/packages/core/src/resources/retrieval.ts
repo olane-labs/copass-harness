@@ -25,13 +25,34 @@ export interface ChatMessage {
 export interface DiscoveryItem {
   id: string;
   score: number;
+  /**
+   * One-sentence summary. Populated by `copass/copass_1.0` (path string);
+   * empty under `copass/copass_2.0` — use `subgraph` instead.
+   */
   summary: string;
   /**
-   * Full tuple of canonical IDs for the hierarchical path this item
-   * represents. Pass as one tuple to `/interpret` to pin retrieval
-   * to this slice of the graph.
+   * Tuple of canonical IDs to pin /interpret retrieval to this item.
+   *
+   * - Under `copass/copass_1.0` this is the full hierarchical path
+   *   (root → leaf).
+   * - Under `copass/copass_2.0` this is the matched canonical plus
+   *   every sub-graph node the query graph identified inside it.
    */
   canonical_ids: string[];
+  /**
+   * Pre-rendered ASCII tree of the matched canonical's sub-graph,
+   * with matched nodes highlighted (⭐) and event timestamps inline.
+   * Only populated by the `copass/copass_2.0` preset; absent under
+   * `copass/copass_1.0` (which puts a path breadcrumb in `summary`).
+   */
+  subgraph?: string | null;
+  /**
+   * Names of the entities in the user's question that this item
+   * satisfies. Helps the agent reason about which parts of the
+   * question each item answers. Only populated by the
+   * `copass/copass_2.0` preset.
+   */
+  matched_query_nodes?: string[] | null;
 }
 
 export interface DiscoverRequest {
@@ -46,6 +67,15 @@ export interface DiscoverRequest {
   history?: ChatMessage[];
   project_id?: string;
   reference_date?: string;
+  /**
+   * Retrieval preset selecting the discovery shape. Defaults to
+   * `copass/copass_1.0` server-side when omitted. Under
+   * `copass/copass_2.0` items carry an additional `subgraph` field
+   * with a pre-rendered ASCII tree of the matched canonical, plus a
+   * `matched_query_nodes` list of the question entities that resolved
+   * to it. The `:thinking` suffix is NOT accepted on `/discover`.
+   */
+  preset?: SearchPreset;
 }
 
 export interface DiscoverResponse {
@@ -98,15 +128,27 @@ export interface InterpretResponse {
 /**
  * Retrieval presets accepted by the Copass API.
  *
- * Base presets:
- *   - `copass/1.0` — path-discovery (low-latency default)
- *   - `copass/2.0` — hierarchical-fused per-node embeddings
+ * Canonical names (preferred):
+ *   - `copass/copass_1.0` — path-discovery (low-latency default)
+ *   - `copass/copass_2.0` — hierarchical-fused per-node embeddings
  *
- * Append `:thinking` to either (e.g. `copass/2.0:thinking`) to run an
- * LLM pre-pass that decomposes the question into sub-questions, executes
- * the base preset on each, and synthesizes one combined answer.
+ * Short aliases `copass/1.0` and `copass/2.0` are also accepted by the
+ * server and resolve to the same SearchMatrix; new code should prefer
+ * the canonical names.
+ *
+ * Append `:thinking` to any base preset (e.g. `copass/copass_2.0:thinking`)
+ * to run an LLM pre-pass that decomposes the question into sub-questions,
+ * executes the base preset on each, and synthesizes one combined answer.
+ * The `:thinking` suffix is `/search`-only — `/interpret` and `/discover`
+ * reject it.
  */
 export type SearchPreset =
+  // Canonical names
+  | 'copass/copass_1.0'
+  | 'copass/copass_2.0'
+  | 'copass/copass_1.0:thinking'
+  | 'copass/copass_2.0:thinking'
+  // Short aliases (kept for backward-compat)
   | 'copass/1.0'
   | 'copass/2.0'
   | 'copass/1.0:thinking'

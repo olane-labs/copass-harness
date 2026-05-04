@@ -90,7 +90,7 @@ importers:
   packages/agent-router:
     devDependencies:
       '@copass/core':
-        specifier: ^0.3.9
+        specifier: ^0.4.1
         version: link:../core
       '@types/node':
         specifier: ^25.0.0
@@ -105,11 +105,11 @@ importers:
   packages/ai-sdk:
     dependencies:
       '@copass/config':
-        specifier: ^0.3.2
+        specifier: ^0.4.1
         version: link:../config
     devDependencies:
       '@copass/core':
-        specifier: ^0.3.9
+        specifier: ^0.4.1
         version: link:../core
       '@types/node':
         specifier: ^25.0.0
@@ -177,7 +177,7 @@ importers:
         version: 7.0.5
     devDependencies:
       '@copass/core':
-        specifier: ^0.3.9
+        specifier: ^0.4.1
         version: link:../core
       '@types/node':
         specifier: ^25.0.0
@@ -211,7 +211,7 @@ importers:
         version: 1.0.38
     devDependencies:
       '@copass/core':
-        specifier: ^0.3.9
+        specifier: ^0.4.1
         version: link:../core
       '@types/fs-extra':
         specifier: ^11.0.4
@@ -229,11 +229,11 @@ importers:
   packages/langchain:
     dependencies:
       '@copass/config':
-        specifier: ^0.3.2
+        specifier: ^0.4.1
         version: link:../config
     devDependencies:
       '@copass/core':
-        specifier: ^0.3.9
+        specifier: ^0.4.1
         version: link:../core
       '@langchain/core':
         specifier: ^1.1.0
@@ -257,7 +257,7 @@ importers:
   packages/management:
     devDependencies:
       '@copass/core':
-        specifier: ^0.3.9
+        specifier: ^0.4.1
         version: link:../core
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
@@ -281,11 +281,11 @@ importers:
   packages/mastra:
     dependencies:
       '@copass/config':
-        specifier: ^0.3.2
+        specifier: ^0.4.1
         version: link:../config
     devDependencies:
       '@copass/core':
-        specifier: ^0.3.9
+        specifier: ^0.4.1
         version: link:../core
       '@mastra/core':
         specifier: ^1.26.0
@@ -306,10 +306,10 @@ importers:
   packages/mcp:
     dependencies:
       '@copass/config':
-        specifier: ^0.3.2
+        specifier: ^0.4.1
         version: link:../config
       '@copass/management':
-        specifier: ^0.1.2
+        specifier: ^0.4.1
         version: link:../management
       '@modelcontextprotocol/sdk':
         specifier: ^1.29.0
@@ -319,7 +319,7 @@ importers:
         version: 4.3.6
     devDependencies:
       '@copass/core':
-        specifier: ^0.3.9
+        specifier: ^0.4.1
         version: link:../core
       '@types/node':
         specifier: ^25.0.0
@@ -9892,6 +9892,7 @@ packages:
       {
         integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==,
       }
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuid@11.1.0:
@@ -9913,6 +9914,7 @@ packages:
       {
         integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==,
       }
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:
@@ -14410,7 +14412,7 @@ snapshots:
       jsonwebtoken: 9.0.3
       load-esm: 1.0.3
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.15.0(debug@4.4.3))
+      retry-axios: 2.6.0(axios@1.15.0)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -16395,7 +16397,7 @@ snapshots:
 
   retimeable-signal@1.0.1: {}
 
-  retry-axios@2.6.0(axios@1.15.0(debug@4.4.3)):
+  retry-axios@2.6.0(axios@1.15.0):
     dependencies:
       axios: 1.15.0(debug@4.4.3)
 
