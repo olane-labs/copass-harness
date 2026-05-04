@@ -61,11 +61,20 @@ class RetrievalResource(BaseResource):
         history: Optional[List[Any]] = None,
         project_id: Optional[str] = None,
         reference_date: Optional[str] = None,
+        preset: Optional[SearchPreset] = None,
     ) -> Dict[str, Any]:
         """Ranked menu of context items relevant to ``query``.
 
         Window-aware: repeated calls skip items already surfaced
         earlier in the conversation.
+
+        ``preset`` selects the discovery shape (defaults to
+        ``copass/copass_1.0`` server-side when omitted). Under
+        ``copass/copass_2.0`` each returned item carries an additional
+        ``subgraph`` field with a pre-rendered ASCII tree of the matched
+        canonical's sub-graph, plus a ``matched_query_nodes`` list of
+        the question entities that resolved to it. The ``:thinking``
+        suffix is NOT accepted on ``discover``.
         """
         body: Dict[str, Any] = {
             "query": query,
@@ -75,6 +84,8 @@ class RetrievalResource(BaseResource):
             body["project_id"] = project_id
         if reference_date is not None:
             body["reference_date"] = reference_date
+        if preset is not None:
+            body["preset"] = preset
         return await self._post(
             f"/api/v1/query/sandboxes/{sandbox_id}/discover",
             body,
